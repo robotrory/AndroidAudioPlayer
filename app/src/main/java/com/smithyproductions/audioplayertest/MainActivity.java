@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioPlayerBuilder;
 import com.smithyproductions.audioplayer.AudioTrack;
+import com.smithyproductions.audioplayer.audioEngines.PreloadingAudioEngine;
 import com.smithyproductions.audioplayer.interfaces.ProgressListener;
 import com.smithyproductions.audioplayer.playerEngines.MediaPlayerEngine;
 import com.smithyproductions.audioplayer.trackProviders.PlaylistTrackProvider;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         player = new AudioPlayerBuilder()
                 .setTrackProvider(new PlaylistTrackProvider(playlist))
                 .setPlayerEngine(MediaPlayerEngine.class)
+                .setAudioEngine(PreloadingAudioEngine.class)
                 .build();
 
         playButton.setOnClickListener(new View.OnClickListener() {

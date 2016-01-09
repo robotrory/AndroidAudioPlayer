@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
-import com.smithyproductions.audioplayer.interfaces.MediaPlayerCallbacks;
 import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
 
@@ -36,33 +35,48 @@ public class SingleAudioEngine extends BaseAudioEngine {
 
     @Override
     public void play() {
-        if(playerImplementation.isLoaded()) {
-            //if we've loaded the track, we can start it
-            playerImplementation.play();
-        }else if(playerImplementation.isFinished()) {
-            //if we've finished the current track, but want to start, we should try and load the next one
-            loadNextTrack();
-        } else if(!playerImplementation.isLoaded()) {
+        if(playerImplementation.getTrack() != null) {
+            if(playerImplementation.isFinished()) {
+                //if we've finished the current track, but want to start, we should try and load the next one
+                loadNextTrack();
+            } else {
+                //if we've loaded the track, we can start it
+                playerImplementation.play();
+            }
+        }else {
             loadCurrentTrack();
         }
     }
 
     private void loadCurrentTrack() {
-        loadInTrack(trackProvider.getCurrentTrack());
-    }
-
-    private void loadNextTrack() {
         //if we've finished the current track, spec dictates that we move onto the next track (if available)
         //todo what happens when this is called repeatedly and lots of callbacks are issued?
-        trackProvider.requestNextTrack(new TrackProvider.NextTrackCallback() {
+        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex(), new TrackProvider.TrackCallback() {
             @Override
-            public void onNextTrack(AudioTrack track) {
+            public void onTrackRetrieved(AudioTrack track) {
                 loadInTrack(track);
             }
 
             @Override
             public void onError(String errorMsg) {
-                Log.d("SingleAudioEngine", "can't get next track: '"+errorMsg+"'");
+                Log.d("SingleAudioEngine", "can't get current track: '" + errorMsg + "'");
+            }
+        });
+    }
+
+    private void loadNextTrack() {
+        //if we've finished the current track, spec dictates that we move onto the next track (if available)
+        //todo what happens when this is called repeatedly and lots of callbacks are issued?
+        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() + 1, new TrackProvider.TrackCallback() {
+            @Override
+            public void onTrackRetrieved(AudioTrack track) {
+                trackProvider.incrementTrackIndex();
+                loadInTrack(track);
+            }
+
+            @Override
+            public void onError(String errorMsg) {
+                Log.d("SingleAudioEngine", "can't get next track: '" + errorMsg + "'");
             }
         });
     }
@@ -70,22 +84,23 @@ public class SingleAudioEngine extends BaseAudioEngine {
     private void loadPreviousTrack() {
         //if we've finished the current track, spec dictates that we move onto the next track (if available)
         //todo what happens when this is called repeatedly and lots of parentCallbacks are issued?
-        trackProvider.requestPreviousTrack(new TrackProvider.PreviousTrackCallback() {
+        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() - 1, new TrackProvider.TrackCallback() {
             @Override
-            public void onPreviousTrack(AudioTrack track) {
+            public void onTrackRetrieved(AudioTrack track) {
+                trackProvider.decrementTrackIndex();
                 loadInTrack(track);
             }
 
             @Override
             public void onError(String errorMsg) {
-                Log.d("SingleAudioEngine", "can't get previous track: '"+errorMsg+"'");
+                Log.d("SingleAudioEngine", "can't get previous track: '" + errorMsg + "'");
             }
         });
     }
 
     private void loadInTrack(AudioTrack track) {
         if(track != null) {
-            if(playerImplementation.isLoaded()) {
+            if(playerImplementation.getTrack() != null) {
                 playerImplementation.unloadCurrent();
             }
             playerImplementation.loadTrack(track);

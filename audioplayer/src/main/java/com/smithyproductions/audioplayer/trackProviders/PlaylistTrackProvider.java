@@ -18,31 +18,38 @@ public class PlaylistTrackProvider extends TrackProvider {
         this.trackList = trackList;
     }
 
-    public AudioTrack getCurrentTrack() {
-        return getNthTrack(0);
-    }
-
-    public AudioTrack getNthTrack(final int n) {
-        return trackList.get(currentTrackIndex + n);
+    @Override
+    public int getCurrentTrackIndex() {
+        return currentTrackIndex;
     }
 
     @Override
-    public void requestNextTrack(NextTrackCallback callback) {
+    public void decrementTrackIndex() {
+        currentTrackIndex--;
+        ensureValidTrackIndex();
+    }
+
+    @Override
+    public void incrementTrackIndex() {
         currentTrackIndex++;
-        if(currentTrackIndex < trackList.size()) {
-            callback.onNextTrack(getCurrentTrack());
-        } else {
-            Log.d("PlaylistTrackProvider", "no more tracks to play, looping back to first");
+        ensureValidTrackIndex();
+    }
+
+    private void ensureValidTrackIndex() {
+        if(currentTrackIndex >= trackList.size()) {
             currentTrackIndex = 0;
-            callback.onNextTrack(getCurrentTrack());
+        } else if(currentTrackIndex <= 0) {
+            currentTrackIndex = 0;
         }
     }
 
     @Override
-    public void requestPreviousTrack(PreviousTrackCallback callback) {
-        if(currentTrackIndex > 0) {
-            currentTrackIndex--;
-            callback.onPreviousTrack(getCurrentTrack());
+    public void requestNthTrack(int n, TrackCallback callback) {
+        if(n >= trackList.size()) {
+            Log.d("PlaylistTrackProvider", "no more tracks to play, looping back to first");
+            callback.onTrackRetrieved(trackList.get(0));
+        } else if (n >= 0) {
+            callback.onTrackRetrieved(trackList.get(n));
         } else {
             callback.onError("Can't go to previous track, we're at the first!");
         }

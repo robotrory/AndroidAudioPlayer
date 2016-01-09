@@ -9,21 +9,16 @@ import java.util.List;
  */
 public abstract class TrackProvider {
 
-    public abstract AudioTrack getCurrentTrack();
+    public abstract int getCurrentTrackIndex();
 
-    public abstract AudioTrack getNthTrack(final int n);
+    public abstract void decrementTrackIndex();
+    public abstract void incrementTrackIndex();
 
-    public abstract void requestNextTrack(NextTrackCallback callback);
+    public abstract void requestNthTrack(final int n, TrackCallback callback);
 
-    public abstract void requestPreviousTrack(PreviousTrackCallback callback);
 
-    public interface NextTrackCallback {
-        void onNextTrack(AudioTrack track);
-        void onError(String errorMsg);
-    }
-
-    public interface PreviousTrackCallback {
-        void onPreviousTrack(AudioTrack track);
+    public interface TrackCallback {
+        void onTrackRetrieved(AudioTrack track);
         void onError(String errorMsg);
     }
 }

@@ -2,6 +2,7 @@ package com.smithyproductions.audioplayer.playerEngines;
 
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.support.annotation.Nullable;
 
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.interfaces.MediaPlayerCallbacks;
@@ -14,10 +15,13 @@ import java.io.IOException;
  */
 public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
-    enum State {IDLE, PREPARING, PLAYING, PAUSED, FINISHED;}
+    private AudioTrack track;
+    private float trackDuration = -1;
+
+    enum State {IDLE, PREPARED, PREPARING, PLAYING, PAUSED, FINISHED;}
 
     private final MediaPlayer mediaPlayer;
-    private MediaPlayerCallbacks callbacks;
+    private @Nullable MediaPlayerCallbacks callbacks;
 
     private State currentState = State.IDLE;
     private boolean playWhenReady;
@@ -33,7 +37,13 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         this.animatorRunnable = new AnimatorRunnable(new AnimatorRunnable.TickerInterface() {
             @Override
             public void onTick() {
-                callbacks.onProgress(mediaPlayer.getCurrentPosition() / (float) mediaPlayer.getDuration());
+                if(callbacks != null) {
+                    if ((currentState == State.PLAYING || currentState == State.PAUSED) && trackDuration >= 0) {
+                        callbacks.onProgress(mediaPlayer.getCurrentPosition() / trackDuration);
+                    } else {
+                        callbacks.onProgress(0);
+                    }
+                }
             }
         });
 
@@ -42,7 +52,7 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     @Override
     public void play() {
         playWhenReady = true;
-        if(!mediaPlayer.isPlaying()) {
+        if(currentState == State.PREPARED || currentState == State.PAUSED) {
             mediaPlayer.start();
             animatorRunnable.start();
         }
@@ -52,7 +62,7 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     @Override
     public void pause() {
         playWhenReady = false;
-        if(mediaPlayer.isPlaying()) {
+        if(currentState == State.PLAYING) {
             mediaPlayer.pause();
             animatorRunnable.pause();
         }
@@ -62,6 +72,7 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     @Override
     public void loadTrack(AudioTrack track) {
         try {
+            this.track = track;
             mediaPlayer.reset();
             mediaPlayer.setDataSource(track.getUrl());
             mediaPlayer.prepareAsync();
@@ -77,25 +88,34 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     }
 
     @Override
-    public boolean isLoaded() {
-        return currentState != State.IDLE && currentState != State.PREPARING;
-    }
-
-    @Override
     public boolean isFinished() {
         return currentState == State.FINISHED;
     }
 
     @Override
     public void unloadCurrent() {
-        if(isLoaded()) {
+        if(currentState == State.PAUSED || currentState == State.PLAYING) {
             mediaPlayer.stop();
         }
+        currentState = State.IDLE;
+        trackDuration = -1;
         animatorRunnable.reset();
     }
 
     @Override
+    public AudioTrack getTrack() {
+        return track;
+    }
+
+    @Override
+    public void seekTo(int position) {
+        mediaPlayer.seekTo(position);
+    }
+
+    @Override
     public void onPrepared(MediaPlayer mp) {
+        currentState = State.PREPARED;
+        trackDuration = mp.getDuration();
         if (playWhenReady) {
             play();
         } else {
@@ -106,6 +126,8 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     @Override
     public void onCompletion(MediaPlayer mp) {
         currentState = State.FINISHED;
-        callbacks.onTrackFinished();
+        if(callbacks != null) {
+            callbacks.onTrackFinished();
+        }
     }
 }

@@ -40,6 +40,7 @@ public class AnimatorRunnable implements Runnable {
     public void reset() {
         playing = false;
         handler.removeCallbacks(this);
+        handler.post(tickerRunnable);
     }
 
     @Override

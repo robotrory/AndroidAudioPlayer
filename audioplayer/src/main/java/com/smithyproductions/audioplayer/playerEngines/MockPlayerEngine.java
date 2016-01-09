@@ -2,6 +2,7 @@ package com.smithyproductions.audioplayer.playerEngines;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
@@ -22,7 +23,7 @@ public class MockPlayerEngine extends BasePlayerEngine {
 
     enum State {IDLE, PREPARING, PLAYING, PAUSED, FINISHED;}
 
-    private MediaPlayerCallbacks callbacks;
+    private @Nullable MediaPlayerCallbacks callbacks;
 
     private State currentState = State.IDLE;
 
@@ -31,8 +32,11 @@ public class MockPlayerEngine extends BasePlayerEngine {
     AnimatorRunnable.TickerInterface tickerInterface = new AnimatorRunnable.TickerInterface() {
         @Override
         public void onTick() {
+            if(callbacks != null) {
+                callbacks.onProgress(currentProgress);
+            }
             currentProgress += AnimatorRunnable.Time_INCR / (float) MOCK_DURATION;
-            callbacks.onProgress(currentProgress);
+
             if (currentProgress >= 1.0f) {
                 pause();
                 onAnimationEnd();
@@ -94,10 +98,6 @@ public class MockPlayerEngine extends BasePlayerEngine {
         this.callbacks = callbacks;
     }
 
-    @Override
-    public boolean isLoaded() {
-        return currentState != State.IDLE && currentState != State.PREPARING;
-    }
 
     @Override
     public boolean isFinished() {
@@ -110,10 +110,24 @@ public class MockPlayerEngine extends BasePlayerEngine {
         this.currentTrack = null;
     }
 
+    @Override
+    public AudioTrack getTrack() {
+        return currentTrack;
+    }
+
+    @Override
+    public void seekTo(int position) {
+        //todo actually implement seekTo rather than seekTo(0)
+        fakePlayerAnimator.reset();
+    }
+
     public void onAnimationEnd() {
         Log.d("MockPlayer", "finished playing: " + currentTrack);
         currentState = State.FINISHED;
-        callbacks.onTrackFinished();
+
+        if(callbacks != null) {
+            callbacks.onTrackFinished();
+        }
     }
 
 }
