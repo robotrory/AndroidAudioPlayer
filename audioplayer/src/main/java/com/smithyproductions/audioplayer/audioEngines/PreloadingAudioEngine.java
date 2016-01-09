@@ -12,9 +12,9 @@ import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
  */
 public class PreloadingAudioEngine extends BaseAudioEngine {
 
-    private TrackProvider trackProvider;
+    protected TrackProvider trackProvider;
     BasePlayerEngine[] playerArray = new BasePlayerEngine[2];
-    private AudioEngineCallbacks parentCallbacks;
+    protected AudioEngineCallbacks parentCallbacks;
 
     @Override
     public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, TrackProvider trackProvider, AudioEngineCallbacks callbacks) {
@@ -43,10 +43,12 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     public void play() {
         if(playerArray[0].getTrack() != null) {
             if(playerArray[0].isFinished()) {
-                swapEngines();
-                trackProvider.incrementTrackIndex();
-                loadCurrentTracks();
+                movePlayersToNextTrack();
+                playFromStart(playerArray[0]);
+            } else {
+                playerArray[0].play();
             }
+
         }else {
             loadCurrentTracks();
         }
@@ -57,7 +59,7 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     }
 
 
-    private void loadCurrentTracks() {
+    protected void loadCurrentTracks() {
         //todo what happens when this is called repeatedly and lots of callbacks are issued?
         trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex(), new TrackProvider.TrackCallback() {
             @Override
@@ -91,11 +93,6 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
             AudioTrack loadedTrack = engine.getTrack();
             if(track.equals(loadedTrack)) {
                 Log.d("PreloadingAudioEngine", "track already loaded");
-
-                //we only want to reset if it's in the background
-                if(engine.equals(playerArray[1])) {
-                    engine.seekTo(0);
-                }
             } else {
                 engine.unloadCurrent();
                 engine.loadTrack(track);
@@ -106,7 +103,7 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
         }
     }
 
-    private void swapEngines() {
+    protected void swapEngines() {
         BasePlayerEngine tmp = playerArray[0];
         playerArray[0] = playerArray[1];
         playerArray[1] = tmp;
@@ -118,6 +115,14 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
         playerArray[1].pause();
     }
 
+    private void playFromStart(BasePlayerEngine engine) {
+        //we only want to reset if it's in the background
+        if(!engine.isPreparing()) {
+            engine.seekTo(0);
+        }
+        engine.play();
+    }
+
     @Override
     public void pause() {
         playerArray[0].pause();
@@ -125,27 +130,33 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
 
     @Override
     public void next() {
+        movePlayersToNextTrack();
+        playFromStart(playerArray[0]);
+    }
+
+    protected void movePlayersToNextTrack() {
         swapEngines();
         trackProvider.incrementTrackIndex();
         loadCurrentTracks();
-        playerArray[0].play();
+    }
+
+    private void movePlayersToPreviousTrack() {
+        swapEngines();
+        trackProvider.decrementTrackIndex();
+        loadCurrentTracks();
     }
 
     @Override
     public void previous() {
-        swapEngines();
-        trackProvider.decrementTrackIndex();
-        loadCurrentTracks();
+        movePlayersToPreviousTrack();
         playerArray[0].play();
     }
 
     @Override
     public void onTrackFinished() {
         //this only happens when we're playing, so we should play the background engine
-        swapEngines();
-        trackProvider.incrementTrackIndex();
-        loadCurrentTracks();
-        playerArray[0].play();
+        movePlayersToNextTrack();
+        playFromStart(playerArray[0]);
     }
 
     @Override

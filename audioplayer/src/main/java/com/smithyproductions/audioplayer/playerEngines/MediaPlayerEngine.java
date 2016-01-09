@@ -16,7 +16,8 @@ import java.io.IOException;
 public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
     private AudioTrack track;
-    private float trackDuration = -1;
+    private int trackDuration = -1;
+    private float currentProgress = 0;
 
     enum State {IDLE, PREPARED, PREPARING, PLAYING, PAUSED, FINISHED;}
 
@@ -37,12 +38,13 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         this.animatorRunnable = new AnimatorRunnable(new AnimatorRunnable.TickerInterface() {
             @Override
             public void onTick() {
-                if(callbacks != null) {
-                    if ((currentState == State.PLAYING || currentState == State.PAUSED) && trackDuration >= 0) {
-                        callbacks.onProgress(mediaPlayer.getCurrentPosition() / trackDuration);
-                    } else {
-                        callbacks.onProgress(0);
+                if ((currentState == State.PLAYING || currentState == State.PAUSED) && trackDuration >= 0) {
+                    currentProgress = mediaPlayer.getCurrentPosition() / (float) trackDuration;
+                    if (callbacks != null) {
+                        callbacks.onProgress(currentProgress);
                     }
+                } else if (callbacks != null) {
+                    callbacks.onProgress(0);
                 }
             }
         });
@@ -55,8 +57,9 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         if(currentState == State.PREPARED || currentState == State.PAUSED) {
             mediaPlayer.start();
             animatorRunnable.start();
+            currentState = State.PLAYING;
         }
-        currentState = State.PLAYING;
+
     }
 
     @Override
@@ -65,8 +68,9 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         if(currentState == State.PLAYING) {
             mediaPlayer.pause();
             animatorRunnable.pause();
+            currentState = State.PAUSED;
         }
-        currentState = State.PAUSED;
+
     }
 
     @Override
@@ -99,6 +103,7 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         }
         currentState = State.IDLE;
         trackDuration = -1;
+        currentProgress = 0;
         animatorRunnable.reset();
     }
 
@@ -110,6 +115,26 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     @Override
     public void seekTo(int position) {
         mediaPlayer.seekTo(position);
+    }
+
+    @Override
+    public int getDuration() {
+        return trackDuration;
+    }
+
+    @Override
+    public boolean isPreparing() {
+        return currentState == State.PREPARING || currentState == State.IDLE;
+    }
+
+    @Override
+    public void setVolume(float volume) {
+        mediaPlayer.setVolume(volume, volume);
+    }
+
+    @Override
+    public float getProgress() {
+        return currentProgress;
     }
 
     @Override

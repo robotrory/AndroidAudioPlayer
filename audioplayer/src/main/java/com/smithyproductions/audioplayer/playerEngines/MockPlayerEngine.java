@@ -15,13 +15,13 @@ import com.smithyproductions.audioplayer.interfaces.MediaPlayerCallbacks;
 @TargetApi(Build.VERSION_CODES.KITKAT)
 public class MockPlayerEngine extends BasePlayerEngine {
 
-    private static final long MOCK_DURATION = 1000 * 20;
+    private static final int MOCK_DURATION = 1000 * 20;
 
     private final AnimatorRunnable fakePlayerAnimator;
     private float currentProgress;
     private AudioTrack currentTrack;
 
-    enum State {IDLE, PREPARING, PLAYING, PAUSED, FINISHED;}
+    enum State {IDLE, PLAYING, PAUSED, FINISHED;}
 
     private @Nullable MediaPlayerCallbacks callbacks;
 
@@ -119,6 +119,27 @@ public class MockPlayerEngine extends BasePlayerEngine {
     public void seekTo(int position) {
         //todo actually implement seekTo rather than seekTo(0)
         fakePlayerAnimator.reset();
+    }
+
+    @Override
+    public int getDuration() {
+        return MOCK_DURATION;
+    }
+
+    @Override
+    public boolean isPreparing() {
+        return currentState == State.IDLE;
+    }
+
+    @Override
+    public void setVolume(float volume) {
+        //noop
+        Log.d("MockPlayer", "setting volume to "+volume);
+    }
+
+    @Override
+    public float getProgress() {
+        return currentProgress;
     }
 
     public void onAnimationEnd() {

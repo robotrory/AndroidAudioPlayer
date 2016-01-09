@@ -22,4 +22,11 @@ public abstract class BasePlayerEngine {
 
     public abstract void seekTo(int position);
 
+    public abstract int getDuration();
+
+    public abstract boolean isPreparing();
+
+    public abstract void setVolume(float volume);
+
+    public abstract float getProgress();
 }
