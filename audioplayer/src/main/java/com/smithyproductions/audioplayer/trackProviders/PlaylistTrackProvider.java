@@ -10,9 +10,9 @@ import java.util.List;
  * Created by rory on 07/01/16.
  */
 public class PlaylistTrackProvider extends TrackProvider {
-    private int currentTrackIndex;
+    protected int currentTrackIndex;
 
-    private final List<AudioTrack> trackList;
+    protected final List<AudioTrack> trackList;
 
     public PlaylistTrackProvider (List<AudioTrack> trackList) {
         this.trackList = trackList;
@@ -35,7 +35,7 @@ public class PlaylistTrackProvider extends TrackProvider {
         ensureValidTrackIndex();
     }
 
-    private void ensureValidTrackIndex() {
+    protected void ensureValidTrackIndex() {
         if(currentTrackIndex >= trackList.size()) {
             currentTrackIndex = 0;
         } else if(currentTrackIndex <= 0) {
@@ -52,6 +52,25 @@ public class PlaylistTrackProvider extends TrackProvider {
             callback.onTrackRetrieved(trackList.get(n));
         } else {
             callback.onError("Can't go to previous track, we're at the first!");
+        }
+    }
+
+    @Override
+    public void cancelAllTrackRequests() {
+        //noop, we don't ever store the requests
+    }
+
+    @Override
+    public int getTrackCount() {
+        return trackList.size();
+    }
+
+    @Override
+    public void reset() {
+        currentTrackIndex = 0;
+
+        for(TrackProviderListener trackProviderListener : trackProviderListenerSet) {
+            trackProviderListener.onDataInvalidated();
         }
     }
 }

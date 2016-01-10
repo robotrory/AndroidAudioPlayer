@@ -8,13 +8,15 @@ public class AudioTrack {
     private String name;
     private String performer;
     private String url;
+    private Integer id;
 
-    public static AudioTrack create(String name, String performer, String url) {
+    public static AudioTrack create(String name, String performer, String url, int id) {
         final AudioTrack audioTrack = new AudioTrack();
 
         audioTrack.setName(name);
-        audioTrack.setPerformer(name);
+        audioTrack.setPerformer(performer);
         audioTrack.setUrl(url);
+        audioTrack.setId(id);
 
         return audioTrack;
     }
@@ -43,5 +45,21 @@ public class AudioTrack {
                 ", performer='" + performer + '\'' +
                 ", url='" + url + '\'' +
                 '}';
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPerformer() {
+        return performer;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 }

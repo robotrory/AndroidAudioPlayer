@@ -12,59 +12,30 @@
     tools:context="com.smithyproductions.audioplayertest.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:id="@+id/textView" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Play"
-        android:id="@+id/play_button"
-        android:layout_below="@+id/textView"
+        android:id="@+id/play_pause_button"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pause"
-        android:id="@+id/pause_button"
-        android:layout_below="@+id/textView"
-        android:layout_toRightOf="@+id/play_button"
-        android:layout_toEndOf="@+id/play_button" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Reset"
-        android:id="@+id/reset_button"
-        android:layout_alignTop="@+id/pause_button"
-        android:layout_toRightOf="@+id/pause_button"
-        android:layout_toEndOf="@+id/pause_button" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:text="Next"
         android:id="@+id/next_button"
-        android:layout_below="@+id/play_button"
+        android:layout_below="@+id/play_pause_button"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/pause_button"
-        android:layout_toStartOf="@+id/pause_button" />
+        android:layout_alignParentStart="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Previous"
         android:id="@+id/previous_button"
-        android:layout_below="@+id/pause_button"
-        android:layout_toLeftOf="@+id/reset_button"
-        android:layout_toRightOf="@+id/play_button"
-        android:layout_toEndOf="@+id/play_button" />
+        android:layout_toRightOf="@+id/play_pause_button"
+        android:layout_toEndOf="@+id/play_pause_button" />
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
@@ -77,4 +48,40 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:indeterminate="false" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Performer"
+        android:id="@+id/performer_textview"
+        android:layout_above="@+id/progress_bar"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Title"
+        android:id="@+id/title_textview"
+        android:layout_above="@+id/performer_textview"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Load MIx"
+        android:id="@+id/load_mix_button"
+        android:layout_below="@+id/previous_button"
+        android:layout_toRightOf="@+id/play_pause_button"
+        android:layout_toEndOf="@+id/play_pause_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset"
+        android:id="@+id/reset_button"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/previous_button"
+        android:layout_toEndOf="@+id/previous_button" />
 </RelativeLayout>

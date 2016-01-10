@@ -1,11 +1,12 @@
 package com.smithyproductions.audioplayer.audioEngines;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
-import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
+import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 
 /**
  * Created by rory on 07/01/16.
@@ -14,47 +15,62 @@ public class SingleAudioEngine extends BaseAudioEngine {
 
     private TrackProvider trackProvider;
     BasePlayerEngine playerImplementation;
-    private AudioEngineCallbacks parentCallbacks;
 
     @Override
-    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, TrackProvider trackProvider, AudioEngineCallbacks callbacks) {
+    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, TrackProvider trackProvider, AudioEngineCallbacks callbacks) {
         this.parentCallbacks = callbacks;
         this.trackProvider = trackProvider;
-        try {
-            playerImplementation = mediaPlayerClass.newInstance();
-            playerImplementation.setCallbackHandler(this);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        this.trackProvider.attachListener(this);
+        playerImplementation = createBasePlayerEngine(mediaPlayerClass, context);
+        playerImplementation.setCallbackHandler(this);
 
         //here we try to load any track we can get our hands on, regardless of whether it'll be played or not
-        loadCurrentTrack();
+        if (trackProvider.getTrackCount() > 0) {
+            loadTrack(0);
+        }
+    }
+
+    @Override
+    public void reset() {
+        playerImplementation.pause();
+        setAutoPlay(false);
+        playerImplementation.unloadCurrent();
     }
 
     @Override
     public void play() {
-        if(playerImplementation.getTrack() != null) {
-            if(playerImplementation.isFinished()) {
+        if (playerImplementation.getTrack() != null) {
+            if (playerImplementation.isFinished()) {
                 //if we've finished the current track, but want to start, we should try and load the next one
-                loadNextTrack();
+                loadTrack(1);
             } else {
                 //if we've loaded the track, we can start it
                 playerImplementation.play();
+                setAutoPlay(true);
             }
-        }else {
-            loadCurrentTrack();
+        } else if (trackProvider.getTrackCount() > 0) {
+            loadTrack(0);
         }
     }
 
-    private void loadCurrentTrack() {
+    private void loadTrack(final int offset) {
         //if we've finished the current track, spec dictates that we move onto the next track (if available)
-        //todo what happens when this is called repeatedly and lots of callbacks are issued?
-        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex(), new TrackProvider.TrackCallback() {
+        parentCallbacks.onTrackChange(null);
+        trackProvider.cancelAllTrackRequests();
+        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() + offset, new TrackProvider.TrackCallback() {
             @Override
             public void onTrackRetrieved(AudioTrack track) {
                 loadInTrack(track);
+                parentCallbacks.onTrackChange(track);
+
+                switch (offset) {
+                    case 1:
+                        trackProvider.incrementTrackIndex();
+                        break;
+                    case -1:
+                        trackProvider.decrementTrackIndex();
+                        break;
+                }
             }
 
             @Override
@@ -64,43 +80,9 @@ public class SingleAudioEngine extends BaseAudioEngine {
         });
     }
 
-    private void loadNextTrack() {
-        //if we've finished the current track, spec dictates that we move onto the next track (if available)
-        //todo what happens when this is called repeatedly and lots of callbacks are issued?
-        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() + 1, new TrackProvider.TrackCallback() {
-            @Override
-            public void onTrackRetrieved(AudioTrack track) {
-                trackProvider.incrementTrackIndex();
-                loadInTrack(track);
-            }
-
-            @Override
-            public void onError(String errorMsg) {
-                Log.d("SingleAudioEngine", "can't get next track: '" + errorMsg + "'");
-            }
-        });
-    }
-
-    private void loadPreviousTrack() {
-        //if we've finished the current track, spec dictates that we move onto the next track (if available)
-        //todo what happens when this is called repeatedly and lots of parentCallbacks are issued?
-        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() - 1, new TrackProvider.TrackCallback() {
-            @Override
-            public void onTrackRetrieved(AudioTrack track) {
-                trackProvider.decrementTrackIndex();
-                loadInTrack(track);
-            }
-
-            @Override
-            public void onError(String errorMsg) {
-                Log.d("SingleAudioEngine", "can't get previous track: '" + errorMsg + "'");
-            }
-        });
-    }
-
     private void loadInTrack(AudioTrack track) {
-        if(track != null) {
-            if(playerImplementation.getTrack() != null) {
+        if (track != null) {
+            if (playerImplementation.getTrack() != null) {
                 playerImplementation.unloadCurrent();
             }
             playerImplementation.loadTrack(track);
@@ -112,21 +94,24 @@ public class SingleAudioEngine extends BaseAudioEngine {
     @Override
     public void pause() {
         playerImplementation.pause();
+        setAutoPlay(false);
     }
 
     @Override
     public void next() {
-        loadNextTrack();
+        playerImplementation.pause();
+        loadTrack(1);
     }
 
     @Override
     public void previous() {
-        loadPreviousTrack();
+        playerImplementation.pause();
+        loadTrack(-1);
     }
 
     @Override
     public void onTrackFinished() {
-        loadNextTrack();
+        loadTrack(1);
     }
 
     @Override
@@ -135,7 +120,17 @@ public class SingleAudioEngine extends BaseAudioEngine {
     }
 
     @Override
-    public void onError() {
+    public void onGeneralError() {
         parentCallbacks.onError();
+    }
+
+    @Override
+    public void onTrackUnplayable() {
+        next();
+    }
+
+    @Override
+    public void onDataInvalidated() {
+        loadTrack(0);
     }
 }

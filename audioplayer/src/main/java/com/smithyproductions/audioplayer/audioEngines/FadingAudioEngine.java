@@ -1,5 +1,7 @@
 package com.smithyproductions.audioplayer.audioEngines;
 
+import android.util.Log;
+
 /**
  * Created by rory on 09/01/16.
  */
@@ -30,18 +32,22 @@ public class FadingAudioEngine extends PreloadingAudioEngine {
 
     @Override
     public void onTrackFinished() {
-        movePlayersToNextTrack();
-        playerArray[0].play();
-        playerArray[1].setVolume(1);
-        currentlyFading = false;
+        if(currentlyFading) {
+            Log.d("FadingAudioEngine", "just finished: " + playerArray[0].getTrack());
+            movePlayersToNextTrack();
+            playerArray[0].play();
+            playerArray[1].setVolume(1);
+            currentlyFading = false;
+            Log.d("FadingAudioEngine", "now playing: " + playerArray[0].getTrack());
+        } else {
+            super.onTrackFinished();
+        }
     }
 
     @Override
     public void pause() {
         if(currentlyFading) {
-            swapEngines();
-            trackProvider.incrementTrackIndex();
-            loadCurrentTracks();
+            movePlayersToNextTrack();
             playerArray[0].setVolume(1);
             playerArray[1].setVolume(1);
             currentlyFading = false;

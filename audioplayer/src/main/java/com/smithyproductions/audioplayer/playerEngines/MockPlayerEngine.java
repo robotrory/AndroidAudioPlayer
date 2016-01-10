@@ -1,6 +1,7 @@
 package com.smithyproductions.audioplayer.playerEngines;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -23,11 +24,11 @@ public class MockPlayerEngine extends BasePlayerEngine {
 
     enum State {IDLE, PLAYING, PAUSED, FINISHED;}
 
-    private @Nullable MediaPlayerCallbacks callbacks;
+
 
     private State currentState = State.IDLE;
 
-    private boolean playWhenReady;
+
 
     AnimatorRunnable.TickerInterface tickerInterface = new AnimatorRunnable.TickerInterface() {
         @Override
@@ -58,9 +59,8 @@ public class MockPlayerEngine extends BasePlayerEngine {
         }
     }
 
-    public MockPlayerEngine() {
-
-
+    public MockPlayerEngine(final Context context) {
+        super(context);
         fakePlayerAnimator = new AnimatorUpdaterRunnable(tickerInterface);
 
     }
@@ -68,7 +68,7 @@ public class MockPlayerEngine extends BasePlayerEngine {
     @Override
     public void play() {
         Log.d("MockPlayer", "playing");
-        playWhenReady = true;
+        setPlayWhenReady(true);
         currentState = State.PLAYING;
         fakePlayerAnimator.start();
     }
@@ -76,7 +76,7 @@ public class MockPlayerEngine extends BasePlayerEngine {
     @Override
     public void pause() {
         Log.d("MockPlayer", "pausing");
-        playWhenReady = false;
+        setPlayWhenReady(false);
         currentState = State.PAUSED;
         fakePlayerAnimator.pause();
     }
@@ -140,6 +140,11 @@ public class MockPlayerEngine extends BasePlayerEngine {
     @Override
     public float getProgress() {
         return currentProgress;
+    }
+
+    @Override
+    public boolean willAutoPlay() {
+        return playWhenReady;
     }
 
     public void onAnimationEnd() {

@@ -6,5 +6,6 @@ package com.smithyproductions.audioplayer.interfaces;
 public interface MediaPlayerCallbacks {
     void onTrackFinished();
     void onProgress(float progress);
-    void onError();
+    void onGeneralError();
+    void onTrackUnplayable();
 }
