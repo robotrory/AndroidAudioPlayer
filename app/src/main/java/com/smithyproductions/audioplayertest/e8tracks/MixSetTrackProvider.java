@@ -33,10 +33,10 @@ import retrofit.Retrofit;
  */
 public class MixSetTrackProvider extends TrackProvider {
 
+    public static final String PLAY_TOKEN = "2735211";
     private final E8tracksService apiService;
     final ConcurrentHashMap<Integer, TrackCallback> requestCallbacks = new ConcurrentHashMap<>();
 
-    //default to true at start
     @Nullable private MixResponse currentMix;
     @Nullable private MixResponse nextMix;
     private int currentTrackIndex;
@@ -46,7 +46,7 @@ public class MixSetTrackProvider extends TrackProvider {
     private List<retrofit.Call> mixRequests = new ArrayList<>();
     private List<retrofit.Call> trackRequests = new ArrayList<>();
     private Map<Integer, List<AudioTrack>> trackListMap = new HashMap<>();
-
+    private Map<Integer, Boolean> mixSkipMap = new HashMap<>();
 
     private Set<MixSetTrackProviderInterface> mixSetTrackProviderInterfaceSet = new HashSet<>();
 
@@ -79,7 +79,7 @@ public class MixSetTrackProvider extends TrackProvider {
         }
 
         Log.d("MixSetTrackProvider", "getting tracks for mix with id: " + mixResponse.id);
-        final retrofit.Call<MixSetResponse> call = apiService.playMix("2735211", mixResponse.id);
+        final retrofit.Call<MixSetResponse> call = apiService.playMix(PLAY_TOKEN, mixResponse.id);
         if(!trackRequests.contains(call)) {
             trackRequests.add(call);
             call.enqueue(new Callback<MixSetResponse>() {
@@ -108,13 +108,15 @@ public class MixSetTrackProvider extends TrackProvider {
 
             trackListMap.put(mixResponse.id, trackList);
 
+            mixSkipMap.put(mixResponse.id, response.body().set.skip_allowed);
+
             if(currentMix == null) {
                 currentMix = mixResponse;
                 Log.d("MixSetTrackProvider", "setting currentMix: "+currentMix);
 
                 //gone from null to something, should notify
                 for(TrackProviderListener trackProviderListener : trackProviderListenerSet) {
-                    trackProviderListener.onDataInvalidated();
+                    trackProviderListener.onTracksInvalidated();
                 }
 
                 for (MixSetTrackProviderInterface mixSetTrackProviderInterface : mixSetTrackProviderInterfaceSet) {
@@ -123,7 +125,7 @@ public class MixSetTrackProvider extends TrackProvider {
 
                 fetchNextMix(currentMix);
 
-            } else if (currentMixReachedEnd && nextMix != null && mixResponse.id.intValue() == nextMix.id.intValue()) {
+            } else if (nextMix != null && mixResponse.id.intValue() == nextMix.id.intValue()) {
                 Log.d("MixSetTrackProvider", "moving onto nextMix: "+nextMix);
                 swapToNextMix();
             } else if(nextMix == null) {
@@ -192,7 +194,7 @@ public class MixSetTrackProvider extends TrackProvider {
 
 
     private void fetchNextMix(@NonNull final MixResponse currentMix) {
-        final Call<NextMixResponse> mixCall = apiService.nextMix("2735211", currentMix.id);
+        final Call<NextMixResponse> mixCall = apiService.nextMix(PLAY_TOKEN, currentMix.id, "similar:"+currentMix.id);
         if(!mixRequests.contains(mixCall)) {
             mixRequests.add(mixCall);
             mixCall.enqueue(new Callback<NextMixResponse>() {
@@ -200,7 +202,7 @@ public class MixSetTrackProvider extends TrackProvider {
                 public void onResponse(Response<NextMixResponse> response, Retrofit retrofit) {
 
                     final MixResponse mixResponse = response.body().next_mix;
-                    final retrofit.Call<MixSetResponse> trackCall = apiService.playMix("2735211", mixResponse.id);
+                    final retrofit.Call<MixSetResponse> trackCall = apiService.playMix(PLAY_TOKEN, mixResponse.id);
                     if (!trackRequests.contains(trackCall)) {
                         trackRequests.add(trackCall);
                         trackCall.enqueue(new Callback<MixSetResponse>() {
@@ -246,9 +248,16 @@ public class MixSetTrackProvider extends TrackProvider {
         onTrackChange();
     }
 
+    public boolean canSkip () {
+        if(currentMix != null && mixSkipMap.containsKey(currentMix.id)) {
+            return mixSkipMap.get(currentMix.id);
+        } else {
+            return false;
+        }
+    }
     protected void onTrackChange() {
 
-        if(currentMix != null && currentMixReachedEnd && currentTrackIndex >= getMixTrackList(currentMix).size()) {
+        if(currentTrackIndex >= getMixTrackList(currentMix).size()) {
             //if we've reached the end of the current mix and our current track index is in the next mix
             //then update our current and next mixes
 
@@ -258,22 +267,24 @@ public class MixSetTrackProvider extends TrackProvider {
     }
 
     private void swapToNextMix() {
-        MixResponse lastMix = currentMix;
-        currentTrackIndex -= getMixTrackList(currentMix).size();
+        if(currentMix != null && currentMixReachedEnd) {
+            MixResponse lastMix = currentMix;
+            currentTrackIndex -= getMixTrackList(currentMix).size();
 
-        currentMix = nextMix;
-        nextMix = null;
+            currentMix = nextMix;
+            nextMix = null;
 
-        if(currentMix != null) {
-            fetchNextMix(currentMix);
-        } else {
-            throw new RuntimeException("HELP! We moved past the current mix but didn't have a next mix, so now we have no current mix!");
-        }
+            if (currentMix != null) {
+                fetchNextMix(currentMix);
+            } else {
+                throw new RuntimeException("HELP! We moved past the current mix but didn't have a next mix, so now we have no current mix!");
+            }
 
-        trackListMap.remove(lastMix.id);
+            trackListMap.remove(lastMix.id);
 
-        for (MixSetTrackProviderInterface mixSetTrackProviderInterface : mixSetTrackProviderInterfaceSet) {
-            mixSetTrackProviderInterface.onMixChange(currentMix);
+            for (MixSetTrackProviderInterface mixSetTrackProviderInterface : mixSetTrackProviderInterfaceSet) {
+                mixSetTrackProviderInterface.onMixChange(currentMix);
+            }
         }
     }
 
@@ -304,22 +315,14 @@ public class MixSetTrackProvider extends TrackProvider {
                 final AudioTrack track = AudioTrack.create(track1.name, track1.performer, track1.track_file_stream_url, track1.id);
                 Log.d("MixSetTrackProvider", "adding track: " + track);
                 addedTracks.add(track);
-            } else if (track1 == null) {
-
             }
 
             if (track2 != null && !track2Exists) {
                 final AudioTrack track = AudioTrack.create(track2.name, track2.performer, track2.track_file_stream_url, track2.id);
                 Log.d("MixSetTrackProvider", "adding track: " + track);
                 addedTracks.add(track);
-            } else if (track2 == null) {
-
             }
 
-//            Log.d("MixSetTrackProvider", addedTracks.toString());
-
-        } else {
-            Log.d("MixSetTrackProvider", "reached end of mixset");
         }
 
         return addedTracks;
@@ -348,13 +351,11 @@ public class MixSetTrackProvider extends TrackProvider {
         } else if(!handleCallback(n, callback, currentTrackList, nextTrackList)) {
             Log.d("MixSetTrackProvider", "couldn't handle callback, so we're saving it");
             requestCallbacks.put(n, callback);
-        } else {
-
         }
     }
 
     private void getNextTracks(@NonNull final MixResponse mixResponse) {
-        final retrofit.Call<MixSetResponse> call = apiService.next("2735211", mixResponse.id);
+        final retrofit.Call<MixSetResponse> call = apiService.next(PLAY_TOKEN, mixResponse.id);
         if (!trackRequests.contains(call)) {
             trackRequests.add(call);
             call.enqueue(new Callback<MixSetResponse>() {
@@ -405,7 +406,7 @@ public class MixSetTrackProvider extends TrackProvider {
         }
 
         for(TrackProviderListener trackProviderListener : trackProviderListenerSet) {
-            trackProviderListener.onDataInvalidated();
+            trackProviderListener.onTracksInvalidated();
         }
 
         for(MixSetTrackProviderInterface mixSetTrackProviderInterface : mixSetTrackProviderInterfaceSet) {

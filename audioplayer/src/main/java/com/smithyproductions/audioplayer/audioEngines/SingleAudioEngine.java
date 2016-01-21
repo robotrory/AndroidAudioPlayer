@@ -13,21 +13,14 @@ import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
  */
 public class SingleAudioEngine extends BaseAudioEngine {
 
-    private TrackProvider trackProvider;
+
     BasePlayerEngine playerImplementation;
 
     @Override
-    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, TrackProvider trackProvider, AudioEngineCallbacks callbacks) {
+    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, AudioEngineCallbacks callbacks) {
         this.parentCallbacks = callbacks;
-        this.trackProvider = trackProvider;
-        this.trackProvider.attachListener(this);
         playerImplementation = createBasePlayerEngine(mediaPlayerClass, context);
         playerImplementation.setCallbackHandler(this);
-
-        //here we try to load any track we can get our hands on, regardless of whether it'll be played or not
-        if (trackProvider.getTrackCount() > 0) {
-            loadTrack(0);
-        }
     }
 
     @Override
@@ -48,7 +41,7 @@ public class SingleAudioEngine extends BaseAudioEngine {
                 playerImplementation.play();
                 setAutoPlay(true);
             }
-        } else if (trackProvider.getTrackCount() > 0) {
+        } else if (trackProvider != null && trackProvider.getTrackCount() > 0) {
             loadTrack(0);
         }
     }
@@ -56,28 +49,32 @@ public class SingleAudioEngine extends BaseAudioEngine {
     private void loadTrack(final int offset) {
         //if we've finished the current track, spec dictates that we move onto the next track (if available)
         parentCallbacks.onTrackChange(null);
-        trackProvider.cancelAllTrackRequests();
-        trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() + offset, new TrackProvider.TrackCallback() {
-            @Override
-            public void onTrackRetrieved(AudioTrack track) {
-                loadInTrack(track);
-                parentCallbacks.onTrackChange(track);
+        if (trackProvider != null) {
+            trackProvider.cancelAllTrackRequests();
+            trackProvider.requestNthTrack(trackProvider.getCurrentTrackIndex() + offset, new TrackProvider.TrackCallback() {
+                @Override
+                public void onTrackRetrieved(AudioTrack track) {
+                    loadInTrack(track);
+                    parentCallbacks.onTrackChange(track);
 
-                switch (offset) {
-                    case 1:
-                        trackProvider.incrementTrackIndex();
-                        break;
-                    case -1:
-                        trackProvider.decrementTrackIndex();
-                        break;
+                    if (trackProvider != null) {
+                        switch (offset) {
+                            case 1:
+                                trackProvider.incrementTrackIndex();
+                                break;
+                            case -1:
+                                trackProvider.decrementTrackIndex();
+                                break;
+                        }
+                    }
                 }
-            }
 
-            @Override
-            public void onError(String errorMsg) {
-                Log.d("SingleAudioEngine", "can't get current track: '" + errorMsg + "'");
-            }
-        });
+                @Override
+                public void onError(String errorMsg) {
+                    Log.d("SingleAudioEngine", "can't get current track: '" + errorMsg + "'");
+                }
+            });
+        }
     }
 
     private void loadInTrack(AudioTrack track) {
@@ -130,7 +127,9 @@ public class SingleAudioEngine extends BaseAudioEngine {
     }
 
     @Override
-    public void onDataInvalidated() {
-        loadTrack(0);
+    public void onTracksInvalidated() {
+        if (trackProvider != null && trackProvider.getTrackCount() > 0) {
+            loadTrack(0);
+        }
     }
 }

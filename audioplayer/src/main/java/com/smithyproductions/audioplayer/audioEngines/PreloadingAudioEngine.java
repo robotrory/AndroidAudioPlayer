@@ -13,14 +13,11 @@ import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
  */
 public class PreloadingAudioEngine extends BaseAudioEngine {
 
-    protected TrackProvider trackProvider;
     BasePlayerEngine[] playerArray = new BasePlayerEngine[2];
 
     @Override
-    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, Context context, TrackProvider trackProvider, AudioEngineCallbacks callbacks) {
+    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, Context context, AudioEngineCallbacks callbacks) {
         this.parentCallbacks = callbacks;
-        this.trackProvider = trackProvider;
-        this.trackProvider.attachListener(this);
 
         BasePlayerEngine engine1 = createBasePlayerEngine(mediaPlayerClass, context);
         engine1.setCallbackHandler(this);
@@ -31,10 +28,6 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
         playerArray[1] = engine2;
 
 
-        //here we try to load any tracks we can get our hands on, regardless of whether it'll be played or not
-        if (trackProvider.getTrackCount() > 0) {
-            loadTracks(0);
-        }
     }
 
 
@@ -56,7 +49,7 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
                 playerArray[0].play();
             }
 
-        } else if (trackProvider.getTrackCount() > 0) {
+        } else if (trackProvider != null && trackProvider.getTrackCount() > 0) {
             loadTracks(0);
         }
 
@@ -69,46 +62,50 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
 
     protected void loadTracks(final int offset) {
         parentCallbacks.onTrackChange(null);
-        trackProvider.cancelAllTrackRequests();
-        final int n = trackProvider.getCurrentTrackIndex() + offset;
-        trackProvider.requestNthTrack(n, new TrackProvider.TrackCallback() {
-            @Override
-            public void onTrackRetrieved(AudioTrack track) {
-                Log.d("PreloadingAudioEngine", "applying to player 0 track for position " + n + ": " + track);
-                loadInTrack(track, playerArray[0]);
-                parentCallbacks.onTrackChange(track);
+        if(trackProvider != null) {
+            trackProvider.cancelAllTrackRequests();
+            final int n = trackProvider.getCurrentTrackIndex() + offset;
+            trackProvider.requestNthTrack(n, new TrackProvider.TrackCallback() {
+                @Override
+                public void onTrackRetrieved(AudioTrack track) {
+                    Log.d("PreloadingAudioEngine", "applying to player 0 track for position " + n + ": " + track);
+                    loadInTrack(track, playerArray[0]);
+                    parentCallbacks.onTrackChange(track);
 
-                //todo make this cleaner
-                switch (offset) {
-                    case 1:
-                        trackProvider.incrementTrackIndex();
-                        break;
-                    case -1:
-                        trackProvider.decrementTrackIndex();
-                        break;
+                    if (trackProvider != null) {
+                        //todo make this cleaner
+                        switch (offset) {
+                            case 1:
+                                trackProvider.incrementTrackIndex();
+                                break;
+                            case -1:
+                                trackProvider.decrementTrackIndex();
+                                break;
+                        }
+
+                        //now get the next track
+                        final int n = trackProvider.getCurrentTrackIndex() + 1;
+                        trackProvider.requestNthTrack(n, new TrackProvider.TrackCallback() {
+                            @Override
+                            public void onTrackRetrieved(AudioTrack track) {
+                                Log.d("PreloadingAudioEngine", "applying to player 1 track for position " + n + ": " + track);
+                                loadInTrack(track, playerArray[1]);
+                            }
+
+                            @Override
+                            public void onError(String errorMsg) {
+                                Log.d("PreloadingAudioEngine", "can't get next track: '" + errorMsg + "'");
+                            }
+                        });
+                    }
                 }
 
-                //now get the next track
-                final int n = trackProvider.getCurrentTrackIndex() + 1;
-                trackProvider.requestNthTrack(n, new TrackProvider.TrackCallback() {
-                    @Override
-                    public void onTrackRetrieved(AudioTrack track) {
-                        Log.d("PreloadingAudioEngine", "applying to player 1 track for position " + n + ": " + track);
-                        loadInTrack(track, playerArray[1]);
-                    }
-
-                    @Override
-                    public void onError(String errorMsg) {
-                        Log.d("PreloadingAudioEngine", "can't get next track: '" + errorMsg + "'");
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String errorMsg) {
-                Log.d("PreloadingAudioEngine", "can't get current track: '" + errorMsg + "'");
-            }
-        });
+                @Override
+                public void onError(String errorMsg) {
+                    Log.d("PreloadingAudioEngine", "can't get current track: '" + errorMsg + "'");
+                }
+            });
+        }
 
 
     }
@@ -204,7 +201,9 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     }
 
     @Override
-    public void onDataInvalidated() {
-        loadTracks(0);
+    public void onTracksInvalidated() {
+        if (trackProvider != null && trackProvider.getTrackCount() > 0) {
+            loadTracks(0);
+        }
     }
 }

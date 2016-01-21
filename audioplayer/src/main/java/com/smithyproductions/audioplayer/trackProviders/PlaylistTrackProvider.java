@@ -70,7 +70,7 @@ public class PlaylistTrackProvider extends TrackProvider {
         currentTrackIndex = 0;
 
         for(TrackProviderListener trackProviderListener : trackProviderListenerSet) {
-            trackProviderListener.onDataInvalidated();
+            trackProviderListener.onTracksInvalidated();
         }
     }
 }

@@ -19,6 +19,10 @@ public abstract class TrackProvider {
         trackProviderListenerSet.add(trackProviderListener);
     }
 
+    public void dettachListener(TrackProviderListener trackProviderListener) {
+        trackProviderListenerSet.remove(trackProviderListener);
+    }
+
     public abstract int getCurrentTrackIndex();
 
     public abstract void decrementTrackIndex();
@@ -32,13 +36,12 @@ public abstract class TrackProvider {
 
     public abstract void reset();
 
-
     public interface TrackCallback {
         void onTrackRetrieved(AudioTrack track);
         void onError(String errorMsg);
     }
 
     public interface TrackProviderListener {
-        void onDataInvalidated();
+        void onTracksInvalidated();
     }
 }

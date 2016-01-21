@@ -27,6 +27,6 @@ public interface E8tracksService {
     Call<MixInfoResponse> mixInfo(@Path("user") String user, @Path("mix_name") String mixName);
 
     @GET("sets/{play_token}/next_mix.json?api_version=3&api_key=3dda11b4bd06c6ff75677d0f60b7c83794642c8d&include=next_track")
-    Call<NextMixResponse> nextMix(@Path("play_token") String playToken, @Query("mix_id") Integer mixId);
+    Call<NextMixResponse> nextMix(@Path("play_token") String playToken, @Query("mix_id") Integer mixId, @Query("smart_id") String smartId);
 
 }

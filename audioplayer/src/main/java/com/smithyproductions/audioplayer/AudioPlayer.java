@@ -20,48 +20,47 @@ import java.util.Set;
 /**
  * Created by rory on 07/01/16.
  */
-public class AudioPlayer implements AudioEngineCallbacks, TrackProvider.TrackProviderListener {
+public class AudioPlayer {
 
-    private final TrackProvider trackProvider;
     private final Class<? extends BaseAudioEngine> audioEngineClass;
     private final Class<? extends BasePlayerEngine> mediaPlayerClass;
-
     private static AudioPlayer sAudioPlayer;
 
     private BaseAudioEngine baseAudioEngine;
 
     private Set<ControlInterface> controlInterfaceSet = new HashSet<>();
+
+    private TrackProvider trackProvider;
+    private Set<ControlInterface> queuedControlInterfaceSet = new HashSet<>();
     private AudioTrack currentTrack;
     private State currentState;
     private PersistentService service;
     private float lastProgress;
 
 
-    private AudioPlayer(final TrackProvider trackProvider, final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
-        this.trackProvider = trackProvider;
+    private AudioPlayer(final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
         this.audioEngineClass = audioEngineClass;
         this.mediaPlayerClass = mediaPlayerClass;
 
         try {
             baseAudioEngine = audioEngineClass.newInstance();
             //todo think about passing a different callback inetrface here, maybe specially for UI?
-            baseAudioEngine.init(mediaPlayerClass, context, this.trackProvider, this);
+            baseAudioEngine.init(mediaPlayerClass, context, audioEngineCallbacks);
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
 
-        this.trackProvider.attachListener(this);
     }
 
 
-    static AudioPlayer initPlayer (final Context context, final TrackProvider trackProvider, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
+    static AudioPlayer initPlayer (final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
         if (sAudioPlayer != null) {
             throw new RuntimeException("You can only init audio player once");
         }
 
-        sAudioPlayer = new AudioPlayer(trackProvider, context, audioEngineClass, mediaPlayerClass);
+        sAudioPlayer = new AudioPlayer(context, audioEngineClass, mediaPlayerClass);
 
         final Intent service = new Intent(context, PersistentService.class);
         service.setAction(PersistentService.ACTION_INIT_PLAYER);
@@ -107,14 +106,19 @@ public class AudioPlayer implements AudioEngineCallbacks, TrackProvider.TrackPro
     }
 
     public void attachControl(final ControlInterface controlInterface) {
-        controlInterfaceSet.add(controlInterface);
+        //control interface expects us to be fully functional
+        //we're not fully functional until our service has been attached
+        if (service != null) {
+            controlInterfaceSet.add(controlInterface);
+            controlInterface.onProgressChange(lastProgress);
+            controlInterface.onDataChange(hasData());
+            controlInterface.onAutoPlayChange(isAutoPlay());
+            controlInterface.onTrackChange(getTrack());
 
-        controlInterface.onProgressChange(lastProgress);
-        controlInterface.onDataChange(hasData());
-        controlInterface.onAutoPlayChange(isAutoPlay());
-        controlInterface.onTrackChange(getTrack());
-
-        controlInterface.setAudioPlayer(this);
+            controlInterface.setAudioPlayer(this);
+        } else {
+            queuedControlInterfaceSet.add(controlInterface);
+        }
     }
 
     public void unattachControl(final ControlInterface controlInterface) {
@@ -122,41 +126,46 @@ public class AudioPlayer implements AudioEngineCallbacks, TrackProvider.TrackPro
         controlInterfaceSet.remove(controlInterface);
     }
 
-    @Override
-    public void onProgress(float progress) {
-        lastProgress = progress;
-        for(ControlInterface controlInterface : controlInterfaceSet) {
-            controlInterface.onProgressChange(progress);
+    final AudioEngineCallbacks audioEngineCallbacks = new AudioEngineCallbacks() {
+        @Override
+        public void onProgress(float progress) {
+            lastProgress = progress;
+            for (ControlInterface controlInterface : controlInterfaceSet) {
+                controlInterface.onProgressChange(progress);
+            }
         }
-    }
 
-    @Override
-    public void onTrackChange(AudioTrack track) {
-        currentTrack = track;
-        for(ControlInterface controlInterface : controlInterfaceSet) {
-            controlInterface.onTrackChange(track);
+        @Override
+        public void onTrackChange(AudioTrack track) {
+            currentTrack = track;
+            for (ControlInterface controlInterface : controlInterfaceSet) {
+                controlInterface.onTrackChange(track);
+            }
         }
-    }
 
-    @Override
-    public void onAutoPlayStateChange(final boolean autoplay) {
-        for(ControlInterface controlInterface : controlInterfaceSet) {
-            controlInterface.onAutoPlayChange(autoplay);
+        @Override
+        public void onAutoPlayStateChange(final boolean autoplay) {
+            for (ControlInterface controlInterface : controlInterfaceSet) {
+                controlInterface.onAutoPlayChange(autoplay);
+            }
         }
-    }
 
-    @Override
-    public void onDataInvalidated() {
-        final boolean hasData = trackProvider.getTrackCount() > 0;
-        for(ControlInterface controlInterface : controlInterfaceSet) {
-            controlInterface.onDataChange(hasData);
+        @Override
+        public void onError() {
+            throw new RuntimeException("Some error");
         }
-    }
+    };
 
-    @Override
-    public void onError() {
-        throw new RuntimeException("Some error");
-    }
+
+
+    final TrackProvider.TrackProviderListener trackProviderListener = new TrackProvider.TrackProviderListener() {
+        @Override
+        public void onTracksInvalidated() {
+            for (ControlInterface controlInterface : controlInterfaceSet) {
+                controlInterface.onDataChange(hasData());
+            }
+        }
+    };
 
     public AudioTrack getTrack() {
         return currentTrack;
@@ -166,8 +175,31 @@ public class AudioPlayer implements AudioEngineCallbacks, TrackProvider.TrackPro
         return baseAudioEngine.willAutoPlay();
     }
 
-    public void bindService(PersistentService service) {
+    void bindService(PersistentService service) {
         this.service = service;
+
+        if(this.service != null) {
+            //now add any queued controls
+            for (ControlInterface controlInterface : queuedControlInterfaceSet) {
+                controlInterface.onProgressChange(lastProgress);
+                controlInterface.onDataChange(hasData());
+                controlInterface.onAutoPlayChange(isAutoPlay());
+                controlInterface.onTrackChange(getTrack());
+
+                controlInterface.setAudioPlayer(this);
+
+                controlInterfaceSet.add(controlInterface);
+            }
+
+            queuedControlInterfaceSet.clear();
+        } else {
+            //no service for whatever reason, so controls are non-functional
+            for (ControlInterface controlInterface : controlInterfaceSet) {
+                controlInterface.setAudioPlayer(null);
+                controlInterfaceSet.add(controlInterface);
+            }
+            controlInterfaceSet.clear();
+        }
     }
 
     public PersistentService getService() {
@@ -181,5 +213,17 @@ public class AudioPlayer implements AudioEngineCallbacks, TrackProvider.TrackPro
     public void stop () {
         trackProvider.reset();
         baseAudioEngine.reset();
+    }
+
+    public void setTrackProvider(TrackProvider trackProvider) {
+        if(this.trackProvider != null) {
+            this.trackProvider.dettachListener(trackProviderListener);
+        }
+        this.trackProvider = trackProvider;
+        baseAudioEngine.setTrackProvider(this.trackProvider);
+
+        if(this.trackProvider != null) {
+            this.trackProvider.attachListener(trackProviderListener);
+        }
     }
 }

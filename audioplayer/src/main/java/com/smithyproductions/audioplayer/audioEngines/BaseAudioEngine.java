@@ -1,6 +1,7 @@
 package com.smithyproductions.audioplayer.audioEngines;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
 import com.smithyproductions.audioplayer.interfaces.MediaPlayerCallbacks;
@@ -26,10 +27,27 @@ public abstract class BaseAudioEngine implements MediaPlayerCallbacks, TrackProv
 
     private boolean autoPlay;
 
-    public abstract void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, TrackProvider trackProvider, AudioEngineCallbacks callbacks);
+    public abstract void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, AudioEngineCallbacks callbacks);
 
+    public void setTrackProvider(@Nullable TrackProvider trackProvider) {
+        if (this.trackProvider != null) {
+            this.trackProvider.dettachListener(this);
+        }
+
+        this.trackProvider = trackProvider;
+
+        if (this.trackProvider != null) {
+            this.trackProvider.attachListener(this);
+
+            //here we try to load any track we can get our hands on, regardless of whether it'll be played or not
+            this.onTracksInvalidated();
+        }
+    }
 
     public abstract void reset();
+
+    @Nullable
+    protected TrackProvider trackProvider;
 
     protected void setAutoPlay(final boolean autoPlay) {
         this.autoPlay = autoPlay;

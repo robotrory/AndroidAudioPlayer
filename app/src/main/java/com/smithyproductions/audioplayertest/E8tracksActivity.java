@@ -90,16 +90,7 @@ public class E8tracksActivity extends AppCompatActivity {
 
         AudioPlayer audioPlayer = AudioPlayer.getPlayer();
 
-        if (audioPlayer == null) {
-            audioPlayer = new AudioPlayerBuilder(getApplicationContext())
-                    .setPlayerEngine(MediaPlayerEngine.class)
-                    .setAudioEngine(FadingAudioEngine.class)
-                    .setTrackProvider(mixSetTrackProvider)
-                    .build();
-
-            audioPlayer.attachControl(new MediaSessionControl());
-            audioPlayer.attachControl(new NotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
-        }
+        audioPlayer.setTrackProvider(mixSetTrackProvider);
 
         setAudioPlayer(audioPlayer);
 
@@ -178,6 +169,7 @@ public class E8tracksActivity extends AppCompatActivity {
             service.mixInfo(slashParts[slashParts.length - 2], slashParts[slashParts.length - 1]).enqueue(new Callback<MixInfoResponse>() {
                 @Override
                 public void onResponse(Response<MixInfoResponse> response, Retrofit retrofit) {
+                    mixSetTrackProvider.reset();
                     mixSetTrackProvider.loadMix(response.body().mix);
                 }
 
@@ -221,15 +213,12 @@ public class E8tracksActivity extends AppCompatActivity {
             }
         });
 
-
-
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 player.stop();
             }
         });
-
 
     }
 

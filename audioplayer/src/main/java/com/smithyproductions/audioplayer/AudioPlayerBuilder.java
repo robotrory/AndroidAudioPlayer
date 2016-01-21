@@ -14,7 +14,6 @@ import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 public class AudioPlayerBuilder {
 
     private final Context context;
-    private TrackProvider trackProvider;
     private Class<? extends BaseAudioEngine> audioEngineClass = SingleAudioEngine.class;
     private Class<? extends BasePlayerEngine> mediaPlayerClass = MockPlayerEngine.class;
 
@@ -23,15 +22,7 @@ public class AudioPlayerBuilder {
     }
 
     public AudioPlayer build() {
-        if(trackProvider == null) {
-            throw new RuntimeException("You must call setTrackProvider() before build()");
-        }
-        return AudioPlayer.initPlayer(context, trackProvider, audioEngineClass, mediaPlayerClass);
-    }
-
-    public AudioPlayerBuilder setTrackProvider(TrackProvider trackProvider) {
-        this.trackProvider = trackProvider;
-        return this;
+        return AudioPlayer.initPlayer(context, audioEngineClass, mediaPlayerClass);
     }
 
     public AudioPlayerBuilder setPlayerEngine(Class<? extends BasePlayerEngine> playerEngine) {
