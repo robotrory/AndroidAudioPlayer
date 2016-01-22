@@ -51,9 +51,10 @@ public class MixSetTrackProvider extends TrackProvider {
     private Set<MixSetTrackProviderInterface> mixSetTrackProviderInterfaceSet = new HashSet<>();
 
     public interface MixSetTrackProviderInterface {
-        void onMixChange(@Nullable MixResponse mixResponse);
-    }
 
+        void onMixChange(@Nullable MixResponse mixResponse);
+
+    }
     public MixSetTrackProvider() {
 
         OkHttpClient client = new OkHttpClient();
@@ -69,7 +70,6 @@ public class MixSetTrackProvider extends TrackProvider {
 
         apiService = retrofit.create(E8tracksService.class);
     }
-
     public void loadMix(final MixResponse mixResponse) {
 
         trackListMap.clear();
@@ -126,8 +126,9 @@ public class MixSetTrackProvider extends TrackProvider {
                 fetchNextMix(currentMix);
 
             } else if (nextMix != null && mixResponse.id.intValue() == nextMix.id.intValue()) {
-                Log.d("MixSetTrackProvider", "moving onto nextMix: "+nextMix);
-                swapToNextMix();
+                //not sure what these do??
+//                Log.d("MixSetTrackProvider", "moving onto nextMix: "+nextMix);
+//                swapToNextMix();
             } else if(nextMix == null) {
                 nextMix = mixResponse;
                 Log.d("MixSetTrackProvider", "setting nextMix: "+nextMix);
@@ -192,6 +193,15 @@ public class MixSetTrackProvider extends TrackProvider {
         return false;
     }
 
+    public void goToNextMix() {
+        if(nextMix != null) {
+            swapToNextMix();
+
+            for(TrackProviderListener trackProviderListener : trackProviderListenerSet) {
+                trackProviderListener.onTracksInvalidated();
+            }
+        }
+    }
 
     private void fetchNextMix(@NonNull final MixResponse currentMix) {
         final Call<NextMixResponse> mixCall = apiService.nextMix(PLAY_TOKEN, currentMix.id, "similar:"+currentMix.id);
@@ -232,6 +242,7 @@ public class MixSetTrackProvider extends TrackProvider {
         }
     }
 
+
     @Override
     public int getCurrentTrackIndex() {
         return currentTrackIndex;
@@ -255,21 +266,23 @@ public class MixSetTrackProvider extends TrackProvider {
             return false;
         }
     }
+
     protected void onTrackChange() {
 
         if(currentTrackIndex >= getMixTrackList(currentMix).size()) {
             //if we've reached the end of the current mix and our current track index is in the next mix
             //then update our current and next mixes
-
-            swapToNextMix();
+            if(currentMixReachedEnd) {
+                swapToNextMix();
+            }
         }
 
     }
-
     private void swapToNextMix() {
-        if(currentMix != null && currentMixReachedEnd) {
+        if(currentMix != null) {
             MixResponse lastMix = currentMix;
-            currentTrackIndex -= getMixTrackList(currentMix).size();
+            Log.d("MixSetTrackProvider","currentTrackIndex: "+currentTrackIndex+" currentMix: "+currentMix.id+" getMixTrackList(currentMix).size(): "+getMixTrackList(currentMix).size());
+            currentTrackIndex = 0;//-= getMixTrackList(currentMix).size();
 
             currentMix = nextMix;
             nextMix = null;
@@ -386,6 +399,23 @@ public class MixSetTrackProvider extends TrackProvider {
             totalTracks += list.size();
         }
         return totalTracks;
+    }
+
+    public List<AudioTrack> getCurrentMixTracks () {
+        if (currentMix != null) {
+            Log.d("MixSetTrackProvider", "list size: "+trackListMap.get(currentMix.id).size()+" currentIndex: "+(currentTrackIndex+1));
+            return trackListMap.get(currentMix.id).subList(0, currentTrackIndex+1);
+        } else {
+            return null;
+        }
+    }
+
+    public int getCurrentMixTrackCount() {
+        if(getCurrentMixTracks() != null) {
+            return getCurrentMixTracks().size();
+        } else {
+            return 0;
+        }
     }
 
     @Override

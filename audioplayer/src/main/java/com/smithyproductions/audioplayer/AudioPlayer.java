@@ -226,4 +226,8 @@ public class AudioPlayer {
             this.trackProvider.attachListener(trackProviderListener);
         }
     }
+
+    public TrackProvider getTrackProvider() {
+        return trackProvider;
+    }
 }

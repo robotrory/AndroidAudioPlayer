@@ -16,6 +16,7 @@ import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.R;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by rory on 10/01/16.
@@ -23,22 +24,33 @@ import java.util.ArrayList;
 public class NotificationControl extends ControlAdapter {
 
     private static final int NOTIFICATION_ID = 2134;
-    private static final String ACTION_NEXT_TRACK = "next_track";
-    private static final String ACTION_PREVIOUS_TRACK = "previous_track";
-    private static final String ACTION_PAUSE = "pause";
-    private static final String ACTION_PLAY = "play";
-    private static final String ACTION_DELETE = "delete";
-    private static final int REQUEST_CODE = 3110;
+    protected static final String ACTION_NEXT_TRACK = "next_track";
+    protected static final String ACTION_PREVIOUS_TRACK = "previous_track";
+    protected static final String ACTION_PAUSE = "pause";
+    protected static final String ACTION_PLAY = "play";
+    protected static final String ACTION_DELETE = "delete";
+    protected static final int REQUEST_CODE = 3110;
     private final PendingIntent openIntent;
     private NotificationManager mNotificationManager;
     private boolean mStarted;
     private boolean mDismissable;
+    private List<String> filterActions = new ArrayList<>();
 
     public NotificationControl(Context context, PendingIntent openIntent) {
         this.openIntent = openIntent;
         mNotificationManager = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
 
+        registerFilter(ACTION_NEXT_TRACK);
+        registerFilter(ACTION_PREVIOUS_TRACK);
+        registerFilter(ACTION_PAUSE);
+        registerFilter(ACTION_PLAY);
+        registerFilter(ACTION_DELETE);
+
+    }
+
+    protected void registerFilter(final String filter) {
+        filterActions.add(filter);
     }
 
     private Notification createNotification(@NonNull final AudioTrack track) {
@@ -81,7 +93,7 @@ public class NotificationControl extends ControlAdapter {
     }
 
 
-    private ArrayList<NotificationCompat.Action> getNotificationActions() {
+    protected ArrayList<NotificationCompat.Action> getNotificationActions() {
         final ArrayList<NotificationCompat.Action> actions = new ArrayList<>();
 
         actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_previous, "previous", createBroadcastIntent(audioPlayer.getService(), ACTION_PREVIOUS_TRACK, REQUEST_CODE)));
@@ -125,11 +137,9 @@ public class NotificationControl extends ControlAdapter {
 
                 if (!mStarted) {
                     final IntentFilter filter = new IntentFilter();
-                    filter.addAction(ACTION_NEXT_TRACK);
-                    filter.addAction(ACTION_PREVIOUS_TRACK);
-                    filter.addAction(ACTION_PAUSE);
-                    filter.addAction(ACTION_PLAY);
-                    filter.addAction(ACTION_DELETE);
+                    for(String filterAction : filterActions) {
+                        filter.addAction(filterAction);
+                    }
                     audioPlayer.getService().registerReceiver(broadcastReceiver, filter);
                 }
 
@@ -184,36 +194,40 @@ public class NotificationControl extends ControlAdapter {
         }
     }
 
-    final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+    final private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             if (audioPlayerAttached) {
                 final String action = intent.getAction();
-                switch (action) {
-                    case ACTION_PAUSE:
-                        Log.d("NotificationControl", "received pause request");
-                        audioPlayer.pause();
-                        break;
-                    case ACTION_PLAY:
-                        Log.d("NotificationControl", "received play request");
-                        audioPlayer.play();
-                        break;
-                    case ACTION_NEXT_TRACK:
-                        Log.d("NotificationControl", "received next request");
-                        audioPlayer.nextTrack();
-                        break;
-                    case ACTION_PREVIOUS_TRACK:
-                        Log.d("NotificationControl", "received previous request");
-                        audioPlayer.previousTrack();
-                        break;
-                    case ACTION_DELETE:
-                        Log.d("NotificationControl", "received delete request");
-                        audioPlayer.stop();
-                        break;
-                    default:
-                        Log.w("NotificationControl", "Unknown intent ignored. Action=" + action);
-                }
+                parseBroadcast(action);
             }
         }
     };
+
+    protected void parseBroadcast(String action) {
+        switch (action) {
+            case ACTION_PAUSE:
+                Log.d("NotificationControl", "received pause request");
+                audioPlayer.pause();
+                break;
+            case ACTION_PLAY:
+                Log.d("NotificationControl", "received play request");
+                audioPlayer.play();
+                break;
+            case ACTION_NEXT_TRACK:
+                Log.d("NotificationControl", "received next request");
+                audioPlayer.nextTrack();
+                break;
+            case ACTION_PREVIOUS_TRACK:
+                Log.d("NotificationControl", "received previous request");
+                audioPlayer.previousTrack();
+                break;
+            case ACTION_DELETE:
+                Log.d("NotificationControl", "received delete request");
+                audioPlayer.stop();
+                break;
+            default:
+                Log.w("NotificationControl", "Unknown intent ignored. Action=" + action);
+        }
+    }
 }

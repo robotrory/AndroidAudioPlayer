@@ -16,24 +16,19 @@ import java.io.IOException;
 /**
  * Created by rory on 07/01/16.
  */
-public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, PlayerKicker.KickerInterface, AudioManager.OnAudioFocusChangeListener {
+public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, PlayerKicker.KickerInterface {
 
     private final WifiManager.WifiLock mWifiLock;
     private final PlayerKicker audioKicker;
-    private final AudioManager audioManager;
     private AudioTrack track;
     private int trackDuration = -1;
     private float currentProgress = 0;
-    private float duckVolumeMultiplier = 1.0f;
-    private float globalVolume = 1.0f;
 
     enum State {IDLE, PREPARED, PREPARING, PLAYING, PAUSED, FINISHED;}
-    enum FocusState {FULL_FOCUS, HALF_FOCUS, NO_FOCUS}
 
     private MediaPlayer mediaPlayer;
 
     private State currentState = State.IDLE;
-    private FocusState currentFocusState = FocusState.NO_FOCUS;
 
     private final AnimatorRunnable animatorRunnable;
 
@@ -58,69 +53,7 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         mWifiLock = ((WifiManager) context.getSystemService(Context.WIFI_SERVICE))
                 .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "smithLock");
 
-        audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     }
-
-    @Override
-    public void onAudioFocusChange(int focusChange) {
-        switch (focusChange) {
-            case AudioManager.AUDIOFOCUS_GAIN:
-                // resume playback
-                switch (currentFocusState) {
-                    case NO_FOCUS:
-                        //unpause
-                        if(currentState == State.PLAYING) {
-                            mediaPlayer.start();
-                            animatorRunnable.start();
-                        }
-                    case HALF_FOCUS:
-                        //restore volume
-                        duckVolumeMultiplier = 1.0f;
-                        updateVolume();
-                    case FULL_FOCUS:
-                        break;
-                }
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS:
-                // Lost focus for an unbounded amount of time: stop playback and release media player
-                if(currentState == State.PLAYING) {
-                    mediaPlayer.pause();
-                    animatorRunnable.pause();
-                }
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                // Lost focus for a short time, but we have to stop
-                // playback. We don't release the media player because playback
-                // is likely to resume
-                if(currentState == State.PLAYING) {
-                    mediaPlayer.pause();
-                    animatorRunnable.pause();
-                }
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                // Lost focus for a short time, but it's ok to keep playing
-                // at an attenuated level
-                duckVolumeMultiplier = 0.1f;
-                updateVolume();
-
-                break;
-        }
-    }
-
-    private boolean requestFocus() {
-        return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
-                        AudioManager.AUDIOFOCUS_GAIN);
-    }
-
-    private boolean abandonFocus() {
-        return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                audioManager.abandonAudioFocus(this);
-    }
-
     private MediaPlayer createMediaPlayer(Context context) {
         MediaPlayer mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -167,8 +100,6 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
             if(!mWifiLock.isHeld()) {
                 mWifiLock.acquire();
             }
-
-            requestFocus();
 
             if(mediaPlayer == null) {
                 mediaPlayer = createMediaPlayer(context);
@@ -230,8 +161,6 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         track = null;
         animatorRunnable.reset();
 
-        abandonFocus();
-
         if(mWifiLock.isHeld()) {
             mWifiLock.release();
         }
@@ -268,14 +197,8 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
 
     @Override
     public void setVolume(float volume) {
-        this.globalVolume = volume;
-        updateVolume();
-    }
-
-    private void updateVolume() {
         if(mediaPlayer != null) {
-            final int correctedVolume = (int) (globalVolume * duckVolumeMultiplier);
-            mediaPlayer.setVolume(correctedVolume, correctedVolume);
+            mediaPlayer.setVolume(volume, volume);
         }
     }
 

@@ -27,6 +27,6 @@ public class AudioPlayerApp extends Application {
                 .build();
 
         audioPlayer.attachControl(new MediaSessionControl());
-        audioPlayer.attachControl(new NotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
+        audioPlayer.attachControl(new e8tracksNotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
     }
 }

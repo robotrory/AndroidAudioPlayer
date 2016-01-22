@@ -1,10 +1,11 @@
 package com.smithyproductions.audioplayertest;
 
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.Patterns;
@@ -17,15 +18,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.smithyproductions.audioplayer.AudioPlayer;
-import com.smithyproductions.audioplayer.AudioPlayerBuilder;
 import com.smithyproductions.audioplayer.AudioTrack;
-import com.smithyproductions.audioplayer.audioEngines.FadingAudioEngine;
-import com.smithyproductions.audioplayer.controls.MediaSessionControl;
-import com.smithyproductions.audioplayer.controls.NotificationControl;
 import com.smithyproductions.audioplayer.controls.ControlAdapter;
-import com.smithyproductions.audioplayer.playerEngines.MediaPlayerEngine;
 import com.smithyproductions.audioplayertest.e8tracks.E8tracksService;
 import com.smithyproductions.audioplayertest.e8tracks.MixSetTrackProvider;
+import com.smithyproductions.audioplayertest.e8tracks.MixTrackAdapter;
 import com.smithyproductions.audioplayertest.e8tracks.models.MixInfoResponse;
 import com.smithyproductions.audioplayertest.e8tracks.models.MixResponse;
 
@@ -49,9 +46,11 @@ public class E8tracksActivity extends AppCompatActivity {
     private Button previousButton;
     private ProgressBar progressBar;
     MixSetTrackProvider mixSetTrackProvider;
-    private String nextMixWebPath;
     private Button loadMixButton;
     private Button resetButton;
+    private RecyclerView mRecyclerView;
+    private LinearLayoutManager mLayoutManager;
+    private MixTrackAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +83,20 @@ public class E8tracksActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mRecyclerView = (RecyclerView) findViewById(R.id.track_recycler_view);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        // specify an adapter (see also next example)
+        mAdapter = new MixTrackAdapter(mixSetTrackProvider);
+        mRecyclerView.setAdapter(mAdapter);
 
         Intent intent = getIntent();
         handleIntent(intent);
@@ -202,7 +215,11 @@ public class E8tracksActivity extends AppCompatActivity {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                player.nextTrack();
+                if (!mixSetTrackProvider.canSkip()) {
+                    Toast.makeText(E8tracksActivity.this, "Run out of skips", Toast.LENGTH_SHORT).show();
+                } else {
+                    player.nextTrack();
+                }
             }
         });
 
@@ -226,6 +243,7 @@ public class E8tracksActivity extends AppCompatActivity {
         @Override
         public void onTrackChange(AudioTrack track) {
             setTrackTextUI(track);
+            mAdapter.notifyDataSetChanged();
         }
 
         @Override

@@ -142,19 +142,19 @@ public class MediaSessionControl extends ControlAdapter {
                             break;
                         case KeyEvent.KEYCODE_MEDIA_PLAY:
                             Log.d("MediaSessionControl", "play requested");
-                            audioPlayer.play();
+                            handlePlay();
                             break;
                         case KeyEvent.KEYCODE_MEDIA_PAUSE:
                             Log.d("MediaSessionControl", "pause requested");
-                            audioPlayer.pause();
+                            handlePause();
                             break;
                         case KeyEvent.KEYCODE_MEDIA_NEXT:
                             Log.d("MediaSessionControl", "next requested");
-                            audioPlayer.nextTrack();
+                            handleNext();
                             break;
                         case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
                             Log.d("MediaSessionControl", "previous requested");
-                            audioPlayer.previousTrack();
+                            handlePrevious();
                             break;
                     }
                 }
@@ -162,6 +162,36 @@ public class MediaSessionControl extends ControlAdapter {
             }
         }
     };
+
+    protected void handlePlay() {
+        if (audioPlayerAttached) {
+            audioPlayer.play();
+        }
+    }
+
+    protected void handlePause() {
+        if (audioPlayerAttached) {
+            audioPlayer.pause();
+        }
+    }
+
+    protected void handleNext() {
+        if (audioPlayerAttached) {
+            audioPlayer.nextTrack();
+        }
+    }
+
+    protected void handlePrevious() {
+        if (audioPlayerAttached) {
+            audioPlayer.previousTrack();
+        }
+    }
+
+    protected void handleStop() {
+        if (audioPlayerAttached) {
+            audioPlayer.stop();
+        }
+    }
 
     private final MediaSessionCompat.Callback mMediaSessionCallback = new MediaSessionCompat.Callback() {
 
@@ -175,36 +205,28 @@ public class MediaSessionControl extends ControlAdapter {
         public void onPlay() {
             super.onPlay();
             Log.d("MediaSessionControl", "play requested");
-            if (audioPlayerAttached) {
-                audioPlayer.play();
-            }
+            handlePlay();
         }
 
         @Override
         public void onPause() {
             super.onPause();
             Log.d("MediaSessionControl", "pause requested");
-            if (audioPlayerAttached) {
-                audioPlayer.pause();
-            }
+            handlePause();
         }
 
         @Override
         public void onSkipToNext() {
             super.onSkipToNext();
             Log.d("MediaSessionControl", "next requested");
-            if (audioPlayerAttached) {
-                audioPlayer.nextTrack();
-            }
+            handleNext();
         }
 
         @Override
         public void onSkipToPrevious() {
             super.onSkipToPrevious();
             Log.d("MediaSessionControl", "previous requested");
-            if (audioPlayerAttached) {
-                audioPlayer.previousTrack();
-            }
+            handlePrevious();
         }
 
         @Override
@@ -216,9 +238,7 @@ public class MediaSessionControl extends ControlAdapter {
         public void onStop() {
             super.onStop();
             Log.d("MediaSessionControl", "stop requested");
-            if(audioPlayerAttached) {
-                audioPlayer.stop();
-            }
+            handleStop();
         }
     };
 
