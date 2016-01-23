@@ -60,8 +60,9 @@ public class AudioFocusControl extends ControlAdapter {
                             pausedByAudioFocus = true;
                         } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                             Log.d("AudioFocusControl", "gained audio focus");
-                            // Resume playback
                             // raise volume
+                            audioPlayer.setVolume(1.0f);
+                            // Resume playback
                             if (pausedByAudioFocus) {
                                 Log.d("AudioFocusControl", "was paused by audiofocus so we've resumed");
                                 audioPlayer.play();
