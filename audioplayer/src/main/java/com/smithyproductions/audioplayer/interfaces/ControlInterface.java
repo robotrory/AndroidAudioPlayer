@@ -1,5 +1,7 @@
 package com.smithyproductions.audioplayer.interfaces;
 
+import android.support.annotation.Nullable;
+
 import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioTrack;
 
@@ -8,7 +10,7 @@ import com.smithyproductions.audioplayer.AudioTrack;
  */
 public interface ControlInterface {
     void onAutoPlayChange(final boolean autoplay);
-    void onTrackChange(final AudioTrack track);
+    void onTrackChange(@Nullable final AudioTrack track);
     void onProgressChange(final float progress);
     void onDataChange(final boolean hasData);
     void setAudioPlayer(final AudioPlayer audioPlayer);

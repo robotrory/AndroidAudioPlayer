@@ -8,6 +8,7 @@ import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioPlayerBuilder;
 import com.smithyproductions.audioplayer.audioEngines.FadingAudioEngine;
 import com.smithyproductions.audioplayer.controls.AudioFocusControl;
+import com.smithyproductions.audioplayer.controls.BitmapLoaderControl;
 import com.smithyproductions.audioplayer.controls.MediaSessionControl;
 import com.smithyproductions.audioplayer.controls.NotificationControl;
 import com.smithyproductions.audioplayer.playerEngines.MediaPlayerEngine;

@@ -53,7 +53,7 @@ public class MixTrackAdapter extends RecyclerView.Adapter<MixTrackAdapter.ViewHo
         // - replace the contents of the view with that element
         final AudioTrack track = mMixSetTrackProvider.getCurrentMixTracks().get(position);
         holder.mNameText.setText(track.getName());
-        holder.mPerformerText.setText(track.getPerformer());
+        holder.mPerformerText.setText(track.getArtist());
 
     }
 

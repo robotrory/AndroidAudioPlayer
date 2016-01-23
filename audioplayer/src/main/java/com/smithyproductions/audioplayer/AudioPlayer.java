@@ -110,19 +110,25 @@ public class AudioPlayer {
         //control interface expects us to be fully functional
         //we're not fully functional until our service has been attached
         if (service != null) {
-            controlInterfaceSet.add(controlInterface);
+            addControlToSet(controlInterface);
+        } else {
+            queuedControlInterfaceSet.add(controlInterface);
+        }
+    }
+
+    private void addControlToSet(ControlInterface controlInterface) {
+        if(!controlInterfaceSet.contains(controlInterface)) {
             controlInterface.onProgressChange(lastProgress);
             controlInterface.onDataChange(hasData());
             controlInterface.onAutoPlayChange(isAutoPlay());
             controlInterface.onTrackChange(getTrack());
 
             controlInterface.setAudioPlayer(this);
-        } else {
-            queuedControlInterfaceSet.add(controlInterface);
+            controlInterfaceSet.add(controlInterface);
         }
     }
 
-    public void unattachControl(final ControlInterface controlInterface) {
+    public void detachControl(final ControlInterface controlInterface) {
         controlInterface.setAudioPlayer(null);
         controlInterfaceSet.remove(controlInterface);
     }
@@ -182,14 +188,7 @@ public class AudioPlayer {
         if(this.service != null) {
             //now add any queued controls
             for (ControlInterface controlInterface : queuedControlInterfaceSet) {
-                controlInterface.onProgressChange(lastProgress);
-                controlInterface.onDataChange(hasData());
-                controlInterface.onAutoPlayChange(isAutoPlay());
-                controlInterface.onTrackChange(getTrack());
-
-                controlInterface.setAudioPlayer(this);
-
-                controlInterfaceSet.add(controlInterface);
+                addControlToSet(controlInterface);
             }
 
             queuedControlInterfaceSet.clear();

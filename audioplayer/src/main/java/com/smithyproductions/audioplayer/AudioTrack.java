@@ -6,15 +6,16 @@ package com.smithyproductions.audioplayer;
 public class AudioTrack {
 
     private String name;
-    private String performer;
+    private String artist;
     private String url;
     private Integer id;
+    private String artworkUrl = "http://www.hdwallpapers.in/walls/actress_natalie_dormer-wide.jpg";
 
     public static AudioTrack create(String name, String performer, String url, int id) {
         final AudioTrack audioTrack = new AudioTrack();
 
         audioTrack.setName(name);
-        audioTrack.setPerformer(performer);
+        audioTrack.setArtist(performer);
         audioTrack.setUrl(url);
         audioTrack.setId(id);
 
@@ -26,8 +27,8 @@ public class AudioTrack {
         this.name = name;
     }
 
-    public void setPerformer(String performer) {
-        this.performer = performer;
+    public void setArtist(String artist) {
+        this.artist = artist;
     }
 
     public void setUrl(String url) {
@@ -42,8 +43,10 @@ public class AudioTrack {
     public String toString() {
         return "AudioTrack{" +
                 "name='" + name + '\'' +
-                ", performer='" + performer + '\'' +
+                ", artist='" + artist + '\'' +
                 ", url='" + url + '\'' +
+                ", id=" + id +
+                ", artworkUrl='" + artworkUrl + '\'' +
                 '}';
     }
 
@@ -51,8 +54,8 @@ public class AudioTrack {
         return name;
     }
 
-    public String getPerformer() {
-        return performer;
+    public String getArtist() {
+        return artist;
     }
 
     public Integer getId() {
@@ -61,5 +64,13 @@ public class AudioTrack {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getArtworkUrl() {
+        return artworkUrl;
+    }
+
+    public void setArtworkUrl(String artworkUrl) {
+        this.artworkUrl = artworkUrl;
     }
 }

@@ -9,9 +9,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
+import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.R;
 
@@ -21,7 +24,7 @@ import java.util.List;
 /**
  * Created by rory on 10/01/16.
  */
-public class NotificationControl extends ControlAdapter {
+public class NotificationControl extends ControlAdapter implements BitmapLoaderControl.BitmapLoaderInterface {
 
     private static final int NOTIFICATION_ID = 2134;
     protected static final String ACTION_NEXT_TRACK = "next_track";
@@ -31,6 +34,7 @@ public class NotificationControl extends ControlAdapter {
     protected static final String ACTION_DELETE = "delete";
     protected static final int REQUEST_CODE = 3110;
     private final PendingIntent openIntent;
+    private final BitmapLoaderControl bitmapLoader;
     private NotificationManager mNotificationManager;
     private boolean mStarted;
     private boolean mDismissable;
@@ -47,6 +51,17 @@ public class NotificationControl extends ControlAdapter {
         registerFilter(ACTION_PLAY);
         registerFilter(ACTION_DELETE);
 
+        bitmapLoader = BitmapLoaderControl.getInstance();
+        bitmapLoader.attachBitmapLoaderInterface(this);
+
+    }
+
+    @Override
+    public void setAudioPlayer(AudioPlayer audioPlayer) {
+        super.setAudioPlayer(audioPlayer);
+        if (audioPlayer != null) {
+            audioPlayer.attachControl(bitmapLoader);
+        }
     }
 
     protected void registerFilter(final String filter) {
@@ -58,12 +73,16 @@ public class NotificationControl extends ControlAdapter {
                 .setStyle(new NotificationCompat.MediaStyle()
                         .setShowActionsInCompactView(0, 1, 2))
                 .setContentTitle(track.getName())
-                .setContentText(track.getPerformer())
+                .setContentText(track.getArtist())
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
                 .setDeleteIntent(createBroadcastIntent(audioPlayer.getService(), ACTION_DELETE, REQUEST_CODE))
                 .setContentIntent(openIntent);
+
+        if(bitmapLoader != null && bitmapLoader.getcurrentTrack() != null && bitmapLoader.getcurrentTrack().equals(track)) {
+            builder.setLargeIcon(bitmapLoader.getCurrentBitmap());
+        }
 
         for (final NotificationCompat.Action action : getNotificationActions()) {
             builder.addAction(action);
@@ -110,7 +129,14 @@ public class NotificationControl extends ControlAdapter {
     }
 
     @Override
-    public void onTrackChange(AudioTrack track) {
+    public void onTrackChange(@Nullable AudioTrack track) {
+        if (audioPlayerAttached && track != null) {
+            updateNotification();
+        }
+    }
+
+    @Override
+    public void onAudioTrackBitmapReady(AudioTrack track) {
         if (audioPlayerAttached && track != null) {
             updateNotification();
         }

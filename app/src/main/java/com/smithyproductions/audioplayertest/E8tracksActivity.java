@@ -241,7 +241,7 @@ public class E8tracksActivity extends AppCompatActivity {
 
     final ControlAdapter controlInterface = new ControlAdapter() {
         @Override
-        public void onTrackChange(AudioTrack track) {
+        public void onTrackChange(@Nullable AudioTrack track) {
             setTrackTextUI(track);
             mAdapter.notifyDataSetChanged();
         }
@@ -276,7 +276,7 @@ public class E8tracksActivity extends AppCompatActivity {
     private void setTrackTextUI(@Nullable AudioTrack track) {
         if (track != null) {
             titleTextView.setText(track.getName());
-            performerTextView.setText(track.getPerformer());
+            performerTextView.setText(track.getArtist());
         } else if (player.hasData()){
             titleTextView.setText("");
             performerTextView.setText("loading");
@@ -299,7 +299,7 @@ public class E8tracksActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-        player.unattachControl(controlInterface);
+        player.detachControl(controlInterface);
     }
 
     @Override

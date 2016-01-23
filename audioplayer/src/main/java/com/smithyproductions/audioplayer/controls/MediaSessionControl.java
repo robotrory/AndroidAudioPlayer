@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.support.annotation.Nullable;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -14,16 +15,31 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioTrack;
+import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 
 /**
  * Created by rory on 10/01/16.
  */
-public class MediaSessionControl extends ControlAdapter {
+public class MediaSessionControl extends ControlAdapter implements BitmapLoaderControl.BitmapLoaderInterface {
     public static final long CAPABILITIES = PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls mTransportController;
+    private BitmapLoaderControl bitmapLoader;
 
+    public MediaSessionControl () {
+        bitmapLoader = BitmapLoaderControl.getInstance();
+        bitmapLoader.attachBitmapLoaderInterface(this);
+    }
+
+    @Override
+    public void setAudioPlayer(AudioPlayer audioPlayer) {
+        super.setAudioPlayer(audioPlayer);
+        if (audioPlayer != null) {
+            audioPlayer.attachControl(bitmapLoader);
+        }
+    }
 
     private void setupMediaSession() {
     /* Activate Audio Manager */
@@ -31,6 +47,7 @@ public class MediaSessionControl extends ControlAdapter {
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_MEDIA_BUTTON);
         audioPlayer.getService().registerReceiver(mediaButtonReceiver, filter);
+
 
         final Intent mMediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 
@@ -46,7 +63,7 @@ public class MediaSessionControl extends ControlAdapter {
                 .setActions(CAPABILITIES)
                 .build());
 //        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, track.getPerformer())
+//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, track.getArtist())
 //                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Test Album")
 //                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, track.getName())
 //                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 10000)
@@ -85,16 +102,29 @@ public class MediaSessionControl extends ControlAdapter {
 
     private void updateMediaSessionMetaData(AudioTrack track) {
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
-        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, track.getPerformer());
+        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, track.getArtist());
 //        builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, getAlbumName());
         builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, track.getName());
+
+        if(bitmapLoader != null && bitmapLoader.getcurrentTrack() != null && bitmapLoader.getcurrentTrack().equals(track)) {
+            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, bitmapLoader.getCurrentBitmap());
+        }
 //        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, getDuration());
 //        builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, MusicUtils.getArtwork(this, getAlbumID(), true));
         mediaSession.setMetadata(builder.build());
     }
 
     @Override
-    public void onTrackChange(AudioTrack track) {
+    public void onTrackChange(@Nullable AudioTrack track) {
+        if (audioPlayerAttached && track != null) {
+            if (mediaSession != null) {
+                updateMediaSessionMetaData(track);
+            }
+        }
+    }
+
+    @Override
+    public void onAudioTrackBitmapReady(AudioTrack track) {
         if (audioPlayerAttached && track != null) {
             if (mediaSession != null) {
                 updateMediaSessionMetaData(track);
@@ -233,5 +263,4 @@ public class MediaSessionControl extends ControlAdapter {
             handleStop();
         }
     };
-
 }

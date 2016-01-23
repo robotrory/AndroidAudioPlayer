@@ -29,7 +29,7 @@ public class ControlAdapter implements ControlInterface {
     }
 
     @Override
-    public void onTrackChange(AudioTrack track) {
+    public void onTrackChange(@Nullable AudioTrack track) {
 
     }
 
