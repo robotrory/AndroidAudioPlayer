@@ -2,6 +2,7 @@ package com.smithyproductions.audioplayer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.audioEngines.BaseAudioEngine;
@@ -30,7 +31,7 @@ public class AudioPlayer {
 
     private Set<ControlInterface> controlInterfaceSet = new HashSet<>();
 
-    private TrackProvider trackProvider;
+    private @Nullable TrackProvider trackProvider;
     private Set<ControlInterface> queuedControlInterfaceSet = new HashSet<>();
     private AudioTrack currentTrack;
     private State currentState;
@@ -207,15 +208,21 @@ public class AudioPlayer {
     }
 
     public boolean hasData() {
-        return trackProvider.getTrackCount() > 0;
+        if (trackProvider != null) {
+            return trackProvider.getTrackCount() > 0;
+        } else {
+            return false;
+        }
     }
 
     public void stop () {
-        trackProvider.reset();
+        if (trackProvider != null) {
+            trackProvider.reset();
+        }
         baseAudioEngine.reset();
     }
 
-    public void setTrackProvider(TrackProvider trackProvider) {
+    public void setTrackProvider(@Nullable TrackProvider trackProvider) {
         if(this.trackProvider != null) {
             this.trackProvider.dettachListener(trackProviderListener);
         }
@@ -227,7 +234,12 @@ public class AudioPlayer {
         }
     }
 
+    @Nullable
     public TrackProvider getTrackProvider() {
         return trackProvider;
+    }
+
+    public void setVolume(float volume) {
+        this.baseAudioEngine.setVolume(volume);
     }
 }

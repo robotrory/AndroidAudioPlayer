@@ -21,7 +21,6 @@ import com.smithyproductions.audioplayer.AudioTrack;
  */
 public class MediaSessionControl extends ControlAdapter {
     public static final long CAPABILITIES = PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
-    private AudioManager mAudioManager;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls mTransportController;
 
@@ -59,13 +58,6 @@ public class MediaSessionControl extends ControlAdapter {
 
         mediaSession.setCallback(mMediaSessionCallback);
 
-        AudioManager audioManager = (AudioManager) audioPlayer.getService().getSystemService(audioPlayer.getService().AUDIO_SERVICE);
-        audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-            @Override
-            public void onAudioFocusChange(int focusChange) {
-                // Ignore
-            }
-        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         mediaSession.setActive(true);
     }
 

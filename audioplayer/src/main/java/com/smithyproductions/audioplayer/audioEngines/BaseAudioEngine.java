@@ -72,4 +72,6 @@ public abstract class BaseAudioEngine implements MediaPlayerCallbacks, TrackProv
     public boolean willAutoPlay() {
         return autoPlay;
     }
+
+    public abstract void setVolume(float volume);
 }

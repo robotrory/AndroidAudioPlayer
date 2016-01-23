@@ -10,6 +10,7 @@ public class FadingAudioEngine extends PreloadingAudioEngine {
 
     private static final int FADE_DURATION = 5000;
     private boolean currentlyFading;
+    private float globalVolume = 1.0f;
 
     @Override
     public void onProgress(float progress) {
@@ -20,8 +21,8 @@ public class FadingAudioEngine extends PreloadingAudioEngine {
                 if (!playerArray[1].isPreparing()) {
                     currentlyFading = true;
                     float fadeProgress = timeRemaining / (float) FADE_DURATION;
-                    playerArray[0].setVolume(fadeProgress);
-                    playerArray[1].setVolume(1 - fadeProgress);
+                    playerArray[0].setVolume(globalVolume * fadeProgress);
+                    playerArray[1].setVolume(globalVolume * (1 - fadeProgress));
                     playerArray[1].play();
                 }
             }
@@ -41,6 +42,15 @@ public class FadingAudioEngine extends PreloadingAudioEngine {
             Log.d("FadingAudioEngine", "now playing: " + playerArray[0].getTrack());
         } else {
             super.onTrackFinished();
+        }
+    }
+
+    @Override
+    public void setVolume(float volume) {
+        globalVolume = volume;
+        if(!currentlyFading) {
+            playerArray[0].setVolume(globalVolume);
+            playerArray[1].setVolume(globalVolume);
         }
     }
 

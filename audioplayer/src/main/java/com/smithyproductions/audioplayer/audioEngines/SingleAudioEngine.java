@@ -31,6 +31,11 @@ public class SingleAudioEngine extends BaseAudioEngine {
     }
 
     @Override
+    public void setVolume(float volume) {
+        playerImplementation.setVolume(volume);
+    }
+
+    @Override
     public void play() {
         if (playerImplementation.getTrack() != null) {
             if (playerImplementation.isFinished()) {

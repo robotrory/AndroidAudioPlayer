@@ -40,6 +40,12 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     }
 
     @Override
+    public void setVolume(float volume) {
+        playerArray[0].setVolume(volume);
+        playerArray[1].setVolume(volume);
+    }
+
+    @Override
     public void play() {
         if (playerArray[0].getTrack() != null) {
             if (playerArray[0].isFinished()) {
