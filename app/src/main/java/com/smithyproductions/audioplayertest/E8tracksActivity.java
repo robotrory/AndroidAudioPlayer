@@ -76,18 +76,32 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         progressBar.setMax(PROGRESS_MAX);
 
-        mixSetTrackProvider = new MixSetTrackProvider();
+        AudioPlayer audioPlayer = AudioPlayer.getPlayer();
 
-        mixSetTrackProvider.addMixSetTrackProviderInterface(new MixSetTrackProvider.MixSetTrackProviderInterface() {
-            @Override
-            public void onMixChange(@Nullable MixResponse mixResponse) {
-                if(mixResponse != null) {
-                    setTitle(mixResponse.name);
-                } else {
-                    setTitle("");
+        if (audioPlayer.getTrackProvider() != null && audioPlayer.getTrackProvider() instanceof MixSetTrackProvider) {
+            mixSetTrackProvider = (MixSetTrackProvider) audioPlayer.getTrackProvider();
+        } else {
+            mixSetTrackProvider = new MixSetTrackProvider();
+
+            mixSetTrackProvider.addMixSetTrackProviderInterface(new MixSetTrackProvider.MixSetTrackProviderInterface() {
+                @Override
+                public void onMixChange(@Nullable MixResponse mixResponse) {
+                    if(mixResponse != null) {
+                        setTitle(mixResponse.name);
+                    } else {
+                        setTitle("");
+                    }
                 }
-            }
-        });
+            });
+
+            audioPlayer.setTrackProvider(mixSetTrackProvider);
+        }
+
+        bitmapLoader = BitmapLoaderControl.getInstance();
+
+        audioPlayer.attachControl(bitmapLoader);
+
+        setAudioPlayer(audioPlayer);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.track_recycler_view);
 
@@ -106,16 +120,6 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         Intent intent = getIntent();
         handleIntent(intent);
 
-
-        AudioPlayer audioPlayer = AudioPlayer.getPlayer();
-
-        audioPlayer.setTrackProvider(mixSetTrackProvider);
-
-        bitmapLoader = BitmapLoaderControl.getInstance();
-
-        audioPlayer.attachControl(bitmapLoader);
-
-        setAudioPlayer(audioPlayer);
 
         loadMixButton.setOnClickListener(new View.OnClickListener() {
             @Override
