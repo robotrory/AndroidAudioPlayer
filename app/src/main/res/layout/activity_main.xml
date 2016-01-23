@@ -121,6 +121,18 @@
             android:layout_height="match_parent"
             android:layout_alignParentBottom="true"
             android:layout_below="@+id/track_title" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/artwork_imageview"
+            android:layout_below="@+id/next_button"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignRight="@+id/progress_bar"
+            android:layout_alignEnd="@+id/progress_bar"
+            android:layout_above="@+id/title_textview"
+            android:scaleType="centerInside" />
     </RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>

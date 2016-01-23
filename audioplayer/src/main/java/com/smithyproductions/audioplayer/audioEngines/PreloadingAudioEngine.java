@@ -210,6 +210,8 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     public void onTracksInvalidated() {
         if (trackProvider != null && trackProvider.getTrackCount() > 0) {
             loadTracks(0);
+        } else {
+            parentCallbacks.onTrackChange(null);
         }
     }
 }

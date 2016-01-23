@@ -13,12 +13,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioTrack;
+import com.smithyproductions.audioplayer.controls.BitmapLoaderControl;
 import com.smithyproductions.audioplayer.controls.ControlAdapter;
 import com.smithyproductions.audioplayertest.e8tracks.E8tracksService;
 import com.smithyproductions.audioplayertest.e8tracks.MixSetTrackProvider;
@@ -35,7 +37,7 @@ import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class E8tracksActivity extends AppCompatActivity {
+public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderControl.BitmapLoaderInterface {
 
     public static final int PROGRESS_MAX = 1000;
     private AudioPlayer player;
@@ -51,6 +53,8 @@ public class E8tracksActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private MixTrackAdapter mAdapter;
+    private ImageView artworkImageView;
+    private BitmapLoaderControl bitmapLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +69,7 @@ public class E8tracksActivity extends AppCompatActivity {
         previousButton = (Button) findViewById(R.id.previous_button);
         loadMixButton = (Button) findViewById(R.id.load_mix_button);
         resetButton = (Button) findViewById(R.id.reset_button);
+        artworkImageView = (ImageView) findViewById(R.id.artwork_imageview);
 
         performerTextView = (TextView) findViewById(R.id.performer_textview);
         titleTextView = (TextView) findViewById(R.id.title_textview);
@@ -101,9 +106,14 @@ public class E8tracksActivity extends AppCompatActivity {
         Intent intent = getIntent();
         handleIntent(intent);
 
+
         AudioPlayer audioPlayer = AudioPlayer.getPlayer();
 
         audioPlayer.setTrackProvider(mixSetTrackProvider);
+
+        bitmapLoader = BitmapLoaderControl.getInstance();
+
+        audioPlayer.attachControl(bitmapLoader);
 
         setAudioPlayer(audioPlayer);
 
@@ -197,8 +207,6 @@ public class E8tracksActivity extends AppCompatActivity {
     protected void setAudioPlayer(AudioPlayer audioPlayer) {
         this.player = audioPlayer;
 
-
-
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -243,6 +251,7 @@ public class E8tracksActivity extends AppCompatActivity {
         @Override
         public void onTrackChange(@Nullable AudioTrack track) {
             setTrackTextUI(track);
+            setArtwork(track);
             mAdapter.notifyDataSetChanged();
         }
 
@@ -264,6 +273,19 @@ public class E8tracksActivity extends AppCompatActivity {
         }
     };
 
+
+    @Override
+    public void onCurrentAudioTrackBitmapReady() {
+        setArtwork(player.getTrack());
+    }
+
+    private void setArtwork(final AudioTrack audioTrack) {
+        if(bitmapLoader.hasBitmapForTrack(audioTrack)) {
+            artworkImageView.setImageBitmap(bitmapLoader.getCurrentBitmap());
+        } else {
+            artworkImageView.setImageBitmap(null);
+        }
+    }
 
     private void setPlayPauseUI(boolean autoPlay) {
         if (autoPlay) {
@@ -293,6 +315,8 @@ public class E8tracksActivity extends AppCompatActivity {
         this.player = AudioPlayer.getPlayer();
 
         this.player.attachControl(controlInterface);
+
+        bitmapLoader.attachBitmapLoaderInterface(this);
     }
 
     @Override
@@ -300,6 +324,8 @@ public class E8tracksActivity extends AppCompatActivity {
         super.onPause();
 
         player.detachControl(controlInterface);
+
+        bitmapLoader.detachBitmapLoaderInterface(this);
     }
 
     @Override

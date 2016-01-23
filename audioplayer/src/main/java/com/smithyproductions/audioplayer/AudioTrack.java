@@ -9,7 +9,7 @@ public class AudioTrack {
     private String artist;
     private String url;
     private Integer id;
-    private String artworkUrl = "http://www.hdwallpapers.in/walls/actress_natalie_dormer-wide.jpg";
+    private String artworkUrl;
 
     public static AudioTrack create(String name, String performer, String url, int id) {
         final AudioTrack audioTrack = new AudioTrack();

@@ -7,6 +7,7 @@ public class MixResponse {
     public String name;
     public Integer id;
     public String web_path;
+    public CoverUrlResponse cover_urls;
 
     @Override
     public String toString() {

@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.media.MediaMetadataCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
@@ -80,7 +79,7 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
                 .setDeleteIntent(createBroadcastIntent(audioPlayer.getService(), ACTION_DELETE, REQUEST_CODE))
                 .setContentIntent(openIntent);
 
-        if(bitmapLoader != null && bitmapLoader.getcurrentTrack() != null && bitmapLoader.getcurrentTrack().equals(track)) {
+        if(bitmapLoader != null && bitmapLoader.hasBitmapForTrack(track)) {
             builder.setLargeIcon(bitmapLoader.getCurrentBitmap());
         }
 
@@ -136,8 +135,8 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     }
 
     @Override
-    public void onAudioTrackBitmapReady(AudioTrack track) {
-        if (audioPlayerAttached && track != null) {
+    public void onCurrentAudioTrackBitmapReady() {
+        if (audioPlayerAttached && audioPlayer.getTrack() != null) {
             updateNotification();
         }
     }

@@ -2,11 +2,12 @@ package com.smithyproductions.audioplayer.controls;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
-import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,24 +33,31 @@ public class BitmapLoaderControl extends ControlAdapter {
         return currentTrack;
     }
 
+    public boolean hasBitmapForTrack(@Nullable AudioTrack audioTrack) {
+        return currentTrack != null && audioTrack != null && currentTrack.getArtworkUrl() != null && currentTrack.getArtworkUrl().equals(audioTrack.getArtworkUrl());
+    }
+
     public interface BitmapLoaderInterface {
 
-        void onAudioTrackBitmapReady(AudioTrack track);
+        void onCurrentAudioTrackBitmapReady();
 
     }
+
     private Set<BitmapLoaderInterface> interfaceSet = new HashSet<>();
     private
     @Nullable
     AudioTrack currentTrack;
 
-    private @Nullable Bitmap currentBitmap;
+    private
+    @Nullable
+    Bitmap currentBitmap;
 
-    private BitmapLoaderControl () {
+    private BitmapLoaderControl() {
 
     }
 
     public static BitmapLoaderControl getInstance() {
-        if(sInstance == null) {
+        if (sInstance == null) {
             sInstance = new BitmapLoaderControl();
         }
         return sInstance;
@@ -57,27 +65,31 @@ public class BitmapLoaderControl extends ControlAdapter {
 
     @Override
     public void onTrackChange(@Nullable AudioTrack track) {
-        final AudioTrack oldTrack = currentTrack;
-        currentTrack = track;
-        if (oldTrack != null && currentTrack != null && oldTrack.getArtworkUrl() != null && oldTrack.getArtworkUrl().equals(currentTrack.getArtworkUrl())) {
+        if (hasBitmapForTrack(track)) {
             //same
             Log.d("BitmapLoaderControl", "New track has same bitmap");
-        } else if (currentTrack != null && currentTrack.getArtworkUrl() != null){
+        } else if (track != null && track.getArtworkUrl() != null) {
             //different, fetch
             currentBitmap = null;
-            final AudioTrack targetTrack = currentTrack;
+            final AudioTrack targetTrack = track;
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Bitmap bitmap = getBitmapFromURL(targetTrack.getArtworkUrl());
-                    Log.d("BitmapLoaderControl", "loaded bitmap for "+targetTrack);
-                    if(targetTrack.equals(currentTrack)) {
-                        currentBitmap = bitmap;
+                    final Bitmap bitmap = getBitmapFromURL(targetTrack.getArtworkUrl());
+                    Log.d("BitmapLoaderControl", "loaded bitmap for " + targetTrack);
 
-                        for(BitmapLoaderInterface bitmapLoaderInterface : interfaceSet) {
-                            bitmapLoaderInterface.onAudioTrackBitmapReady(targetTrack);
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (targetTrack.equals(currentTrack)) {
+                                currentBitmap = bitmap;
+
+                                for (BitmapLoaderInterface bitmapLoaderInterface : interfaceSet) {
+                                    bitmapLoaderInterface.onCurrentAudioTrackBitmapReady();
+                                }
+                            }
                         }
-                    }
+                    });
 
 
                 }
@@ -88,6 +100,7 @@ public class BitmapLoaderControl extends ControlAdapter {
             currentBitmap = null;
             Log.d("BitmapLoaderControl", "This track has no artwork");
         }
+        currentTrack = track;
     }
 
     public static Bitmap getBitmapFromURL(String src) {
@@ -106,6 +119,10 @@ public class BitmapLoaderControl extends ControlAdapter {
 
     public void attachBitmapLoaderInterface(final BitmapLoaderInterface bitmapLoaderInterface) {
         interfaceSet.add(bitmapLoaderInterface);
+
+        if (currentTrack != null && currentBitmap != null) {
+            bitmapLoaderInterface.onCurrentAudioTrackBitmapReady();
+        }
     }
 
     public void detachBitmapLoaderInterface(final BitmapLoaderInterface bitmapLoaderInterface) {

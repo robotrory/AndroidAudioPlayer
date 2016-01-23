@@ -135,6 +135,8 @@ public class SingleAudioEngine extends BaseAudioEngine {
     public void onTracksInvalidated() {
         if (trackProvider != null && trackProvider.getTrackCount() > 0) {
             loadTrack(0);
+        } else {
+            parentCallbacks.onTrackChange(null);
         }
     }
 }

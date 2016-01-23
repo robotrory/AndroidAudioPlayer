@@ -17,7 +17,6 @@ import android.view.KeyEvent;
 
 import com.smithyproductions.audioplayer.AudioPlayer;
 import com.smithyproductions.audioplayer.AudioTrack;
-import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 
 /**
  * Created by rory on 10/01/16.
@@ -106,7 +105,7 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 //        builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, getAlbumName());
         builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, track.getName());
 
-        if(bitmapLoader != null && bitmapLoader.getcurrentTrack() != null && bitmapLoader.getcurrentTrack().equals(track)) {
+        if(bitmapLoader != null && bitmapLoader.hasBitmapForTrack(track)) {
             builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, bitmapLoader.getCurrentBitmap());
         }
 //        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, getDuration());
@@ -124,10 +123,10 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
     }
 
     @Override
-    public void onAudioTrackBitmapReady(AudioTrack track) {
-        if (audioPlayerAttached && track != null) {
+    public void onCurrentAudioTrackBitmapReady() {
+        if (audioPlayerAttached && audioPlayer.getTrack() != null) {
             if (mediaSession != null) {
-                updateMediaSessionMetaData(track);
+                updateMediaSessionMetaData(audioPlayer.getTrack());
             }
         }
     }

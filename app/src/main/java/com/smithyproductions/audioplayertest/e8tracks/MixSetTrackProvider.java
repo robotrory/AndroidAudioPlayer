@@ -327,12 +327,14 @@ public class MixSetTrackProvider extends TrackProvider {
             if (track1 != null && !track1Exists) {
                 final AudioTrack track = AudioTrack.create(track1.name, track1.performer, track1.track_file_stream_url, track1.id);
                 Log.d("MixSetTrackProvider", "adding track: " + track);
+                track.setArtworkUrl(mixResponse.cover_urls.max200);
                 addedTracks.add(track);
             }
 
             if (track2 != null && !track2Exists) {
                 final AudioTrack track = AudioTrack.create(track2.name, track2.performer, track2.track_file_stream_url, track2.id);
                 Log.d("MixSetTrackProvider", "adding track: " + track);
+                track.setArtworkUrl(mixResponse.cover_urls.max200);
                 addedTracks.add(track);
             }
 
