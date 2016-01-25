@@ -10,10 +10,10 @@ public class e8tracksMediaSessionControl extends MediaSessionControl {
     @Override
     protected void handleNext() {
         if(audioPlayerAttached) {
-            if (audioPlayer.getTrackProvider() != null && audioPlayer.getTrackProvider() instanceof MixSetTrackProvider && !((MixSetTrackProvider) audioPlayer.getTrackProvider()).canSkip()) {
-                ((MixSetTrackProvider)audioPlayer.getTrackProvider()).goToNextMix();
+            if (turntable.getTrackProvider() != null && turntable.getTrackProvider() instanceof MixSetTrackProvider && !((MixSetTrackProvider) turntable.getTrackProvider()).canSkip()) {
+                ((MixSetTrackProvider) turntable.getTrackProvider()).goToNextMix();
             } else {
-                audioPlayer.nextTrack();
+                turntable.nextTrack();
             }
         }
     }

@@ -2,7 +2,7 @@ package com.smithyproductions.audioplayer.controls;
 
 import android.support.annotation.Nullable;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
+import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 
@@ -11,16 +11,16 @@ import com.smithyproductions.audioplayer.interfaces.ControlInterface;
  */
 public class ControlAdapter implements ControlInterface {
 
-    @Nullable protected AudioPlayer audioPlayer;
+    @Nullable protected Turntable turntable;
     protected boolean audioPlayerAttached;
 
     public ControlAdapter () {
     }
 
     @Override
-    public void setAudioPlayer(AudioPlayer audioPlayer) {
-        this.audioPlayer = audioPlayer;
-        audioPlayerAttached = this.audioPlayer != null;
+    public void setTurntable(Turntable turntable) {
+        this.turntable = turntable;
+        audioPlayerAttached = this.turntable != null;
     }
 
     @Override

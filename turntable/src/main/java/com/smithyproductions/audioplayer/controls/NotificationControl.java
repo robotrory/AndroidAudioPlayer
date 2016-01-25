@@ -13,7 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
+import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.R;
 
@@ -56,10 +56,10 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     }
 
     @Override
-    public void setAudioPlayer(AudioPlayer audioPlayer) {
-        super.setAudioPlayer(audioPlayer);
-        if (audioPlayer != null) {
-            audioPlayer.attachControl(bitmapLoader);
+    public void setTurntable(Turntable turntable) {
+        super.setTurntable(turntable);
+        if (turntable != null) {
+            turntable.attachControl(bitmapLoader);
         }
     }
 
@@ -68,7 +68,7 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     }
 
     private Notification createNotification(@NonNull final AudioTrack track) {
-        android.support.v4.app.NotificationCompat.Builder builder = new NotificationCompat.Builder(audioPlayer.getService())
+        android.support.v4.app.NotificationCompat.Builder builder = new NotificationCompat.Builder(turntable.getService())
                 .setStyle(new NotificationCompat.MediaStyle()
                         .setShowActionsInCompactView(0, 1, 2))
                 .setContentTitle(track.getName())
@@ -76,7 +76,7 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-                .setDeleteIntent(createBroadcastIntent(audioPlayer.getService(), ACTION_DELETE, REQUEST_CODE))
+                .setDeleteIntent(createBroadcastIntent(turntable.getService(), ACTION_DELETE, REQUEST_CODE))
                 .setContentIntent(openIntent);
 
         if(bitmapLoader != null && bitmapLoader.hasBitmapForTrack(track)) {
@@ -94,7 +94,7 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     public void onDataChange(boolean hasData) {
         if (audioPlayerAttached) {
             if (hasData) {
-                if (audioPlayer.getTrack() != null) {
+                if (turntable.getTrack() != null) {
                     startNotification();
                 }
             } else {
@@ -114,15 +114,15 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     protected ArrayList<NotificationCompat.Action> getNotificationActions() {
         final ArrayList<NotificationCompat.Action> actions = new ArrayList<>();
 
-        actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_previous, "previous", createBroadcastIntent(audioPlayer.getService(), ACTION_PREVIOUS_TRACK, REQUEST_CODE)));
+        actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_previous, "previous", createBroadcastIntent(turntable.getService(), ACTION_PREVIOUS_TRACK, REQUEST_CODE)));
 
-        if (audioPlayerAttached && audioPlayer.isAutoPlay()) {
-            actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_pause, "pause", createBroadcastIntent(audioPlayer.getService(), ACTION_PAUSE, REQUEST_CODE)));
+        if (audioPlayerAttached && turntable.isAutoPlay()) {
+            actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_pause, "pause", createBroadcastIntent(turntable.getService(), ACTION_PAUSE, REQUEST_CODE)));
         } else {
-            actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_play, "play", createBroadcastIntent(audioPlayer.getService(), ACTION_PLAY, REQUEST_CODE)));
+            actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_play, "play", createBroadcastIntent(turntable.getService(), ACTION_PLAY, REQUEST_CODE)));
         }
 
-        actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_next, "next", createBroadcastIntent(audioPlayer.getService(), ACTION_NEXT_TRACK, REQUEST_CODE)));
+        actions.add(new NotificationCompat.Action(android.R.drawable.ic_media_next, "next", createBroadcastIntent(turntable.getService(), ACTION_NEXT_TRACK, REQUEST_CODE)));
 
         return actions;
     }
@@ -136,14 +136,14 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
 
     @Override
     public void onCurrentAudioTrackBitmapReady() {
-        if (audioPlayerAttached && audioPlayer.getTrack() != null) {
+        if (audioPlayerAttached && turntable.getTrack() != null) {
             updateNotification();
         }
     }
 
     @Override
     public void onAutoPlayChange(boolean autoplay) {
-        if (audioPlayerAttached && audioPlayer.getTrack() != null) {
+        if (audioPlayerAttached && turntable.getTrack() != null) {
             if (autoplay) {
                 startNotification();
             } else {
@@ -157,7 +157,7 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
             mDismissable = false;
 
             // The notification must be updated after setting started to true
-            final Notification notification = createNotification(audioPlayer.getTrack());
+            final Notification notification = createNotification(turntable.getTrack());
             if (notification != null) {
 
                 if (!mStarted) {
@@ -165,10 +165,10 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
                     for(String filterAction : filterActions) {
                         filter.addAction(filterAction);
                     }
-                    audioPlayer.getService().registerReceiver(broadcastReceiver, filter);
+                    turntable.getService().registerReceiver(broadcastReceiver, filter);
                 }
 
-                audioPlayer.getService().startForeground(NOTIFICATION_ID, notification);
+                turntable.getService().startForeground(NOTIFICATION_ID, notification);
                 mStarted = true;
             }
         } else {
@@ -184,13 +184,13 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
         //stopForeground(true) which removes it, and then we add it again...
         //a bit of an eye sore
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            audioPlayer.getService().stopForeground(false);
+            turntable.getService().stopForeground(false);
         } else {
-            audioPlayer.getService().stopForeground(true);
+            turntable.getService().stopForeground(true);
         }
 
 
-        final Notification notification = createNotification(audioPlayer.getTrack());
+        final Notification notification = createNotification(turntable.getTrack());
         if (notification != null) {
             mNotificationManager.notify(NOTIFICATION_ID, notification);
         }
@@ -205,14 +205,14 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
             } catch (IllegalArgumentException ex) {
                 // ignore if the receiver is not registered.
             }
-            audioPlayer.getService().unregisterReceiver(broadcastReceiver);
-            audioPlayer.getService().stopForeground(true);
+            turntable.getService().unregisterReceiver(broadcastReceiver);
+            turntable.getService().stopForeground(true);
         }
     }
 
     public void updateNotification() {
         if (audioPlayerAttached) {
-            final Notification notification = createNotification(audioPlayer.getTrack());
+            final Notification notification = createNotification(turntable.getTrack());
             if (mStarted && notification != null) {
                 mNotificationManager.notify(NOTIFICATION_ID, notification);
             }
@@ -233,23 +233,23 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
         switch (action) {
             case ACTION_PAUSE:
                 Log.d("NotificationControl", "received pause request");
-                audioPlayer.pause();
+                turntable.pause();
                 break;
             case ACTION_PLAY:
                 Log.d("NotificationControl", "received play request");
-                audioPlayer.play();
+                turntable.play();
                 break;
             case ACTION_NEXT_TRACK:
                 Log.d("NotificationControl", "received next request");
-                audioPlayer.nextTrack();
+                turntable.nextTrack();
                 break;
             case ACTION_PREVIOUS_TRACK:
                 Log.d("NotificationControl", "received previous request");
-                audioPlayer.previousTrack();
+                turntable.previousTrack();
                 break;
             case ACTION_DELETE:
                 Log.d("NotificationControl", "received delete request");
-                audioPlayer.stop();
+                turntable.stop();
                 break;
             default:
                 Log.w("NotificationControl", "Unknown intent ignored. Action=" + action);

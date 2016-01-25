@@ -22,8 +22,8 @@ public class PersistentService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        if(AudioPlayer.getPlayer() != null) {
-            AudioPlayer.getPlayer().bindService(this);
+        if(Turntable.getPlayer() != null) {
+            Turntable.getPlayer().bindService(this);
         }
     }
 }

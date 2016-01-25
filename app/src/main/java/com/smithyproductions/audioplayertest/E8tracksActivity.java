@@ -3,7 +3,9 @@ package com.smithyproductions.audioplayertest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -18,7 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
+import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.controls.BitmapLoaderControl;
 import com.smithyproductions.audioplayer.controls.ControlAdapter;
@@ -40,7 +42,7 @@ import retrofit.Retrofit;
 public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderControl.BitmapLoaderInterface {
 
     public static final int PROGRESS_MAX = 1000;
-    private AudioPlayer player;
+    private Turntable player;
     private TextView performerTextView;
     private TextView titleTextView;
     private Button playPauseButton;
@@ -76,10 +78,10 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         progressBar.setMax(PROGRESS_MAX);
 
-        AudioPlayer audioPlayer = AudioPlayer.getPlayer();
+        Turntable turntable = Turntable.getPlayer();
 
-        if (audioPlayer.getTrackProvider() != null && audioPlayer.getTrackProvider() instanceof MixSetTrackProvider) {
-            mixSetTrackProvider = (MixSetTrackProvider) audioPlayer.getTrackProvider();
+        if (turntable.getTrackProvider() != null && turntable.getTrackProvider() instanceof MixSetTrackProvider) {
+            mixSetTrackProvider = (MixSetTrackProvider) turntable.getTrackProvider();
         } else {
             mixSetTrackProvider = new MixSetTrackProvider();
 
@@ -94,14 +96,14 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
                 }
             });
 
-            audioPlayer.setTrackProvider(mixSetTrackProvider);
+            turntable.setTrackProvider(mixSetTrackProvider);
         }
 
         bitmapLoader = BitmapLoaderControl.getInstance();
 
-        audioPlayer.attachControl(bitmapLoader);
+        turntable.attachControl(bitmapLoader);
 
-        setAudioPlayer(audioPlayer);
+        setAudioPlayer(turntable);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.track_recycler_view);
 
@@ -208,8 +210,35 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         }
     }
 
-    protected void setAudioPlayer(AudioPlayer audioPlayer) {
-        this.player = audioPlayer;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem mediaRouteMenuItem = menu.findItem(R.id.media_route_menu_item);
+        MediaRouteActionProvider mediaRouteActionProvider =
+                (MediaRouteActionProvider) MenuItemCompat.getActionProvider(mediaRouteMenuItem);
+        mediaRouteActionProvider.setRouteSelector(player.getMediaRouteManager().getMediaRouteSelector());
+        return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (player != null) {
+            player.getMediaRouteManager().beginScan();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (player != null) {
+            player.getMediaRouteManager().endScan();
+        }
+    }
+
+    protected void setAudioPlayer(Turntable turntable) {
+        this.player = turntable;
 
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -316,7 +345,7 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
     protected void onResume() {
         super.onResume();
 
-        this.player = AudioPlayer.getPlayer();
+        this.player = Turntable.getPlayer();
 
         this.player.attachControl(controlInterface);
 
@@ -332,25 +361,4 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         bitmapLoader.detachBitmapLoaderInterface(this);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 }

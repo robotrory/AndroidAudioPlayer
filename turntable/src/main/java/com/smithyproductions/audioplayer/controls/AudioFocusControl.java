@@ -56,27 +56,27 @@ public class AudioFocusControl extends ControlAdapter {
                         if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
                             Log.d("AudioFocusControl", "lost audio focus transiently");
                             // Pause playback
-                            audioPlayer.pause();
+                            turntable.pause();
                             pausedByAudioFocus = true;
                         } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                             Log.d("AudioFocusControl", "gained audio focus");
                             // raise volume
-                            audioPlayer.setVolume(1.0f);
+                            turntable.setVolume(1.0f);
                             // Resume playback
                             if (pausedByAudioFocus) {
                                 Log.d("AudioFocusControl", "was paused by audiofocus so we've resumed");
-                                audioPlayer.play();
+                                turntable.play();
                             }
                         } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
                             Log.d("AudioFocusControl", "completely lost audio focus");
 //                        am.unregisterMediaButtonEventReceiver(RemoteControlReceiver);
                             am.abandonAudioFocus(afChangeListener);
                             // Stop playback
-                            audioPlayer.pause();
+                            turntable.pause();
                         } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
                             // Lower the volume
                             Log.d("AudioFocusControl", "lost audio focus, but can duck");
-                            audioPlayer.setVolume(0.1f);
+                            turntable.setVolume(0.1f);
                         }
                     }
                 }

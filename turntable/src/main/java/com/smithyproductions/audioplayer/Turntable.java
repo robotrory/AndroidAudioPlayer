@@ -3,15 +3,15 @@ package com.smithyproductions.audioplayer;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.Nullable;
+import android.support.v7.media.MediaRouteSelector;
+import android.support.v7.media.MediaRouter;
 import android.util.Log;
 
+import com.smithyproductions.audioplayer.MediaRouter.MediaRouteManager;
 import com.smithyproductions.audioplayer.audioEngines.BaseAudioEngine;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
 import com.smithyproductions.audioplayer.interfaces.ControlInterface;
-import com.smithyproductions.audioplayer.interfaces.PlaybackListener;
-import com.smithyproductions.audioplayer.interfaces.ProgressListener;
 import com.smithyproductions.audioplayer.interfaces.State;
-import com.smithyproductions.audioplayer.interfaces.TrackListener;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
 import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 
@@ -21,11 +21,12 @@ import java.util.Set;
 /**
  * Created by rory on 07/01/16.
  */
-public class AudioPlayer {
+public class Turntable {
 
     private final Class<? extends BaseAudioEngine> audioEngineClass;
     private final Class<? extends BasePlayerEngine> mediaPlayerClass;
-    private static AudioPlayer sAudioPlayer;
+    private static Turntable sTurntable;
+    private final MediaRouteManager mMediaRouteManager;
 
     private BaseAudioEngine baseAudioEngine;
 
@@ -37,9 +38,10 @@ public class AudioPlayer {
     private State currentState;
     private PersistentService service;
     private float lastProgress;
+    private boolean chromecastEnabled;
 
 
-    private AudioPlayer(final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
+    private Turntable(final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
         this.audioEngineClass = audioEngineClass;
         this.mediaPlayerClass = mediaPlayerClass;
 
@@ -53,25 +55,28 @@ public class AudioPlayer {
             e.printStackTrace();
         }
 
+        mMediaRouteManager = new MediaRouteManager(context);
+        attachControl(mMediaRouteManager);
+
     }
 
 
-    static AudioPlayer initPlayer (final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
-        if (sAudioPlayer != null) {
+    static Turntable initPlayer (final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
+        if (sTurntable != null) {
             throw new RuntimeException("You can only init audio player once");
         }
 
-        sAudioPlayer = new AudioPlayer(context, audioEngineClass, mediaPlayerClass);
+        sTurntable = new Turntable(context, audioEngineClass, mediaPlayerClass);
 
         final Intent service = new Intent(context, PersistentService.class);
         service.setAction(PersistentService.ACTION_INIT_PLAYER);
         context.startService(service);
 
-        return sAudioPlayer;
+        return sTurntable;
     }
 
-    public static AudioPlayer getPlayer () {
-        return sAudioPlayer;
+    public static Turntable getPlayer () {
+        return sTurntable;
     }
 
     public void play() {
@@ -123,13 +128,13 @@ public class AudioPlayer {
             controlInterface.onAutoPlayChange(isAutoPlay());
             controlInterface.onTrackChange(getTrack());
 
-            controlInterface.setAudioPlayer(this);
+            controlInterface.setTurntable(this);
             controlInterfaceSet.add(controlInterface);
         }
     }
 
     public void detachControl(final ControlInterface controlInterface) {
-        controlInterface.setAudioPlayer(null);
+        controlInterface.setTurntable(null);
         controlInterfaceSet.remove(controlInterface);
     }
 
@@ -195,7 +200,7 @@ public class AudioPlayer {
         } else {
             //no service for whatever reason, so controls are non-functional
             for (ControlInterface controlInterface : controlInterfaceSet) {
-                controlInterface.setAudioPlayer(null);
+                controlInterface.setTurntable(null);
                 controlInterfaceSet.add(controlInterface);
             }
             controlInterfaceSet.clear();
@@ -240,5 +245,14 @@ public class AudioPlayer {
 
     public void setVolume(float volume) {
         this.baseAudioEngine.setVolume(volume);
+    }
+
+    public void setChromecastEnabled(boolean chromecastEnabled) {
+        this.chromecastEnabled = chromecastEnabled;
+        mMediaRouteManager.setEnabled(this.chromecastEnabled);
+    }
+
+    public MediaRouteManager getMediaRouteManager() {
+        return mMediaRouteManager;
     }
 }

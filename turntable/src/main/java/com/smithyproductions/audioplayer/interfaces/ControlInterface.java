@@ -2,7 +2,7 @@ package com.smithyproductions.audioplayer.interfaces;
 
 import android.support.annotation.Nullable;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
+import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 
 /**
@@ -13,5 +13,5 @@ public interface ControlInterface {
     void onTrackChange(@Nullable final AudioTrack track);
     void onProgressChange(final float progress);
     void onDataChange(final boolean hasData);
-    void setAudioPlayer(final AudioPlayer audioPlayer);
+    void setTurntable(final Turntable turntable);
 }

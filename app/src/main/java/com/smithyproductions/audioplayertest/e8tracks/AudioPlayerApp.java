@@ -4,13 +4,11 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Intent;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
-import com.smithyproductions.audioplayer.AudioPlayerBuilder;
+import com.smithyproductions.audioplayer.Turntable;
+import com.smithyproductions.audioplayer.TurntableBuilder;
 import com.smithyproductions.audioplayer.audioEngines.FadingAudioEngine;
 import com.smithyproductions.audioplayer.controls.AudioFocusControl;
-import com.smithyproductions.audioplayer.controls.BitmapLoaderControl;
 import com.smithyproductions.audioplayer.controls.MediaSessionControl;
-import com.smithyproductions.audioplayer.controls.NotificationControl;
 import com.smithyproductions.audioplayer.playerEngines.MediaPlayerEngine;
 import com.smithyproductions.audioplayertest.E8tracksActivity;
 
@@ -23,13 +21,15 @@ public class AudioPlayerApp extends Application {
     public void onCreate() {
         super.onCreate();
 
-        AudioPlayer audioPlayer = new AudioPlayerBuilder(getApplicationContext())
+        Turntable turntable = new TurntableBuilder(getApplicationContext())
                 .setPlayerEngine(MediaPlayerEngine.class)
                 .setAudioEngine(FadingAudioEngine.class)
                 .build();
 
-        audioPlayer.attachControl(new AudioFocusControl(this));
-        audioPlayer.attachControl(new MediaSessionControl());
-        audioPlayer.attachControl(new e8tracksNotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
+        turntable.attachControl(new AudioFocusControl(this));
+        turntable.attachControl(new MediaSessionControl());
+        turntable.attachControl(new e8tracksNotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
+
+        turntable.setChromecastEnabled(true);
     }
 }

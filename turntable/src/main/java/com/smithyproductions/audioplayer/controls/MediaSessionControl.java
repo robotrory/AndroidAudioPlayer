@@ -15,7 +15,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.smithyproductions.audioplayer.AudioPlayer;
+import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 
 /**
@@ -33,10 +33,10 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
     }
 
     @Override
-    public void setAudioPlayer(AudioPlayer audioPlayer) {
-        super.setAudioPlayer(audioPlayer);
-        if (audioPlayer != null) {
-            audioPlayer.attachControl(bitmapLoader);
+    public void setTurntable(Turntable turntable) {
+        super.setTurntable(turntable);
+        if (turntable != null) {
+            turntable.attachControl(bitmapLoader);
         }
     }
 
@@ -45,16 +45,16 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_MEDIA_BUTTON);
-        audioPlayer.getService().registerReceiver(mediaButtonReceiver, filter);
+        turntable.getService().registerReceiver(mediaButtonReceiver, filter);
 
 
         final Intent mMediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
 
-        final PendingIntent mMediaButtonPendingIntent = PendingIntent.getBroadcast(audioPlayer.getService(), 0, mMediaButtonIntent, 0);
+        final PendingIntent mMediaButtonPendingIntent = PendingIntent.getBroadcast(turntable.getService(), 0, mMediaButtonIntent, 0);
 
 
-        ComponentName receiver = new ComponentName(audioPlayer.getService().getPackageName(), MediaSessionControl.class.getName());
-        mediaSession = new MediaSessionCompat(audioPlayer.getService(), "PlayerService", receiver, null);
+        ComponentName receiver = new ComponentName(turntable.getService().getPackageName(), MediaSessionControl.class.getName());
+        mediaSession = new MediaSessionCompat(turntable.getService(), "PlayerService", receiver, null);
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                 MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
@@ -124,9 +124,9 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 
     @Override
     public void onCurrentAudioTrackBitmapReady() {
-        if (audioPlayerAttached && audioPlayer.getTrack() != null) {
+        if (audioPlayerAttached && turntable.getTrack() != null) {
             if (mediaSession != null) {
-                updateMediaSessionMetaData(audioPlayer.getTrack());
+                updateMediaSessionMetaData(turntable.getTrack());
             }
         }
     }
@@ -186,31 +186,31 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 
     protected void handlePlay() {
         if (audioPlayerAttached) {
-            audioPlayer.play();
+            turntable.play();
         }
     }
 
     protected void handlePause() {
         if (audioPlayerAttached) {
-            audioPlayer.pause();
+            turntable.pause();
         }
     }
 
     protected void handleNext() {
         if (audioPlayerAttached) {
-            audioPlayer.nextTrack();
+            turntable.nextTrack();
         }
     }
 
     protected void handlePrevious() {
         if (audioPlayerAttached) {
-            audioPlayer.previousTrack();
+            turntable.previousTrack();
         }
     }
 
     protected void handleStop() {
         if (audioPlayerAttached) {
-            audioPlayer.stop();
+            turntable.stop();
         }
     }
 
@@ -218,7 +218,7 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-            mediaButtonReceiver.onReceive(audioPlayer.getService(), mediaButtonEvent);
+            mediaButtonReceiver.onReceive(turntable.getService(), mediaButtonEvent);
             return true;
         }
 

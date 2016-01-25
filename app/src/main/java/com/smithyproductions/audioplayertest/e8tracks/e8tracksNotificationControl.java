@@ -1,9 +1,7 @@
 package com.smithyproductions.audioplayertest.e8tracks;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -29,17 +27,17 @@ public class e8tracksNotificationControl extends NotificationControl {
     protected ArrayList<NotificationCompat.Action> getNotificationActions() {
         final ArrayList<android.support.v7.app.NotificationCompat.Action> actions = new ArrayList<>();
 
-        actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_previous, "previous", createBroadcastIntent(audioPlayer.getService(), NotificationControl.ACTION_PREVIOUS_TRACK, NotificationControl.REQUEST_CODE)));
+        actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_previous, "previous", createBroadcastIntent(turntable.getService(), NotificationControl.ACTION_PREVIOUS_TRACK, NotificationControl.REQUEST_CODE)));
 
-        if (audioPlayerAttached && audioPlayer.isAutoPlay()) {
-            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_pause, "pause", createBroadcastIntent(audioPlayer.getService(), NotificationControl.ACTION_PAUSE, NotificationControl.REQUEST_CODE)));
+        if (audioPlayerAttached && turntable.isAutoPlay()) {
+            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_pause, "pause", createBroadcastIntent(turntable.getService(), NotificationControl.ACTION_PAUSE, NotificationControl.REQUEST_CODE)));
         } else {
-            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_play, "play", createBroadcastIntent(audioPlayer.getService(), NotificationControl.ACTION_PLAY, NotificationControl.REQUEST_CODE)));
+            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_play, "play", createBroadcastIntent(turntable.getService(), NotificationControl.ACTION_PLAY, NotificationControl.REQUEST_CODE)));
         }
-        if(audioPlayerAttached && audioPlayer.getTrackProvider() != null && audioPlayer.getTrackProvider() instanceof MixSetTrackProvider && !((MixSetTrackProvider)audioPlayer.getTrackProvider()).canSkip()) {
-            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_ff, "next mix", createBroadcastIntent(audioPlayer.getService(), ACTION_NEXT_MIX, NotificationControl.REQUEST_CODE)));
+        if(audioPlayerAttached && turntable.getTrackProvider() != null && turntable.getTrackProvider() instanceof MixSetTrackProvider && !((MixSetTrackProvider) turntable.getTrackProvider()).canSkip()) {
+            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_ff, "next mix", createBroadcastIntent(turntable.getService(), ACTION_NEXT_MIX, NotificationControl.REQUEST_CODE)));
         } else {
-            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_next, "next", createBroadcastIntent(audioPlayer.getService(), NotificationControl.ACTION_NEXT_TRACK, NotificationControl.REQUEST_CODE)));
+            actions.add(new android.support.v7.app.NotificationCompat.Action(android.R.drawable.ic_media_next, "next", createBroadcastIntent(turntable.getService(), NotificationControl.ACTION_NEXT_TRACK, NotificationControl.REQUEST_CODE)));
         }
 
         return actions;
@@ -50,8 +48,8 @@ public class e8tracksNotificationControl extends NotificationControl {
         switch (action) {
             case ACTION_NEXT_MIX:
                 Log.d("NotificationControl", "received next mix request");
-                if(audioPlayer.getTrackProvider() instanceof MixSetTrackProvider) {
-                    ((MixSetTrackProvider)audioPlayer.getTrackProvider()).goToNextMix();
+                if(turntable.getTrackProvider() instanceof MixSetTrackProvider) {
+                    ((MixSetTrackProvider) turntable.getTrackProvider()).goToNextMix();
                 } else {
                     Log.d("NotificationControl", "can't go to next mix");
                 }
