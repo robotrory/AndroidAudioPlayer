@@ -1,6 +1,7 @@
 package com.smithyproductions.audioplayer.audioEngines;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
@@ -16,10 +17,14 @@ public class SingleAudioEngine extends BaseAudioEngine {
 
     BasePlayerEngine playerImplementation;
 
+    public SingleAudioEngine(Class<? extends BasePlayerEngine> mediaPlayerClass) {
+        super(mediaPlayerClass);
+    }
+
     @Override
-    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, final Context context, AudioEngineCallbacks callbacks) {
+    public void init(final Context context, @NonNull AudioEngineCallbacks callbacks) {
         this.parentCallbacks = callbacks;
-        playerImplementation = createBasePlayerEngine(mediaPlayerClass, context);
+        playerImplementation = createBasePlayerEngine(mMediaPlayerClass, context);
         playerImplementation.setCallbackHandler(this);
     }
 
@@ -33,6 +38,16 @@ public class SingleAudioEngine extends BaseAudioEngine {
     @Override
     public void setVolume(float volume) {
         playerImplementation.setVolume(volume);
+    }
+
+    @Override
+    public int getPlaybackPosition() {
+        return (int) (playerImplementation.getProgress() * playerImplementation.getDuration());
+    }
+
+    @Override
+    public void setPlaybackPosition(int position) {
+        playerImplementation.seekTo(position);
     }
 
     @Override

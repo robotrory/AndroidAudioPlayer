@@ -1,6 +1,7 @@
 package com.smithyproductions.audioplayer.audioEngines;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
@@ -15,14 +16,18 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
 
     BasePlayerEngine[] playerArray = new BasePlayerEngine[2];
 
+    public PreloadingAudioEngine(Class<? extends BasePlayerEngine> mediaPlayerClass) {
+        super(mediaPlayerClass);
+    }
+
     @Override
-    public void init(Class<? extends BasePlayerEngine> mediaPlayerClass, Context context, AudioEngineCallbacks callbacks) {
+    public void init(Context context, @NonNull AudioEngineCallbacks callbacks) {
         this.parentCallbacks = callbacks;
 
-        BasePlayerEngine engine1 = createBasePlayerEngine(mediaPlayerClass, context);
+        BasePlayerEngine engine1 = createBasePlayerEngine(mMediaPlayerClass, context);
         engine1.setCallbackHandler(this);
 
-        BasePlayerEngine engine2 = createBasePlayerEngine(mediaPlayerClass, context);
+        BasePlayerEngine engine2 = createBasePlayerEngine(mMediaPlayerClass, context);
 
         playerArray[0] = engine1;
         playerArray[1] = engine2;
@@ -43,6 +48,16 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     public void setVolume(float volume) {
         playerArray[0].setVolume(volume);
         playerArray[1].setVolume(volume);
+    }
+
+    @Override
+    public int getPlaybackPosition() {
+        return (int) (playerArray[0].getProgress() * playerArray[0].getDuration());
+    }
+
+    @Override
+    public void setPlaybackPosition(int position) {
+        playerArray[0].seekTo(position);
     }
 
     @Override
@@ -145,10 +160,7 @@ public class PreloadingAudioEngine extends BaseAudioEngine {
     }
 
     private void playFromStart(BasePlayerEngine engine) {
-        //we only want to reset if it's in the background
-        if (!engine.isPreparing()) {
-            engine.seekTo(0);
-        }
+        engine.seekTo(0);
         engine.play();
     }
 

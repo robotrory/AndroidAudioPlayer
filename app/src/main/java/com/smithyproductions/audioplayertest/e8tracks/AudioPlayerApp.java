@@ -4,9 +4,11 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Intent;
 
+import com.smithyproductions.audioplayer.MediaRouterMultiplexer;
 import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.TurntableBuilder;
 import com.smithyproductions.audioplayer.audioEngines.FadingAudioEngine;
+import com.smithyproductions.audioplayer.audioEngines.PreloadingAudioEngine;
 import com.smithyproductions.audioplayer.controls.AudioFocusControl;
 import com.smithyproductions.audioplayer.controls.MediaSessionControl;
 import com.smithyproductions.audioplayer.playerEngines.MediaPlayerEngine;
@@ -22,14 +24,12 @@ public class AudioPlayerApp extends Application {
         super.onCreate();
 
         Turntable turntable = new TurntableBuilder(getApplicationContext())
-                .setPlayerEngine(MediaPlayerEngine.class)
-                .setAudioEngine(FadingAudioEngine.class)
+                .setAudioEngine(new MediaRouterMultiplexer(getApplicationContext(), new PreloadingAudioEngine(MediaPlayerEngine.class)))
                 .build();
 
         turntable.attachControl(new AudioFocusControl(this));
-        turntable.attachControl(new MediaSessionControl());
+        turntable.attachControl(new MediaSessionControl(this));
         turntable.attachControl(new e8tracksNotificationControl(this, PendingIntent.getActivity(this, 0, new Intent(this, E8tracksActivity.class), 0)));
 
-        turntable.setChromecastEnabled(true);
     }
 }

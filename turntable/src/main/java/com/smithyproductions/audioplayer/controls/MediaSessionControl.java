@@ -9,9 +9,11 @@ import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.support.annotation.Nullable;
 import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.VolumeProviderCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.support.v7.media.MediaRouter;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -23,11 +25,13 @@ import com.smithyproductions.audioplayer.AudioTrack;
  */
 public class MediaSessionControl extends ControlAdapter implements BitmapLoaderControl.BitmapLoaderInterface {
     public static final long CAPABILITIES = PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
+    private final Context context;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls mTransportController;
     private BitmapLoaderControl bitmapLoader;
 
-    public MediaSessionControl () {
+    public MediaSessionControl (final Context context) {
+        this.context = context;
         bitmapLoader = BitmapLoaderControl.getInstance();
         bitmapLoader.attachBitmapLoaderInterface(this);
     }
@@ -52,7 +56,6 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
 
         final PendingIntent mMediaButtonPendingIntent = PendingIntent.getBroadcast(turntable.getService(), 0, mMediaButtonIntent, 0);
 
-
         ComponentName receiver = new ComponentName(turntable.getService().getPackageName(), MediaSessionControl.class.getName());
         mediaSession = new MediaSessionCompat(turntable.getService(), "PlayerService", receiver, null);
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
@@ -75,6 +78,22 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
         mediaSession.setCallback(mMediaSessionCallback);
 
         mediaSession.setActive(true);
+
+//        mediaSession.setPlaybackToRemote(new VolumeProviderCompat(VolumeProviderCompat.VOLUME_CONTROL_ABSOLUTE, 100, 50) {
+//            @Override
+//            public void onSetVolumeTo(int volume) {
+//                super.onSetVolumeTo(volume);
+//                Log.d("MediaSessionControl", "onSetVolumeTo("+volume+")");
+//            }
+//
+//            @Override
+//            public void onAdjustVolume(int direction) {
+//                super.onAdjustVolume(direction);
+//                Log.d("MediaSessionControl", "onAdjustVolume(" + direction + ")");
+//            }
+//        });
+
+        MediaRouter.getInstance(context).setMediaSessionCompat(mediaSession);
     }
 
     @Override

@@ -20,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.smithyproductions.audioplayer.MediaRouter.MediaRouteManager;
 import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.controls.BitmapLoaderControl;
@@ -217,7 +218,7 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
         MenuItem mediaRouteMenuItem = menu.findItem(R.id.media_route_menu_item);
         MediaRouteActionProvider mediaRouteActionProvider =
                 (MediaRouteActionProvider) MenuItemCompat.getActionProvider(mediaRouteMenuItem);
-        mediaRouteActionProvider.setRouteSelector(player.getMediaRouteManager().getMediaRouteSelector());
+        mediaRouteActionProvider.setRouteSelector(MediaRouteManager.getUiComponent().getMediaRouteSelector());
         return true;
     }
 
@@ -225,7 +226,7 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
     protected void onStart() {
         super.onStart();
         if (player != null) {
-            player.getMediaRouteManager().beginScan();
+            MediaRouteManager.getUiComponent().beginScan();
         }
     }
 
@@ -233,7 +234,7 @@ public class E8tracksActivity extends AppCompatActivity implements BitmapLoaderC
     protected void onStop() {
         super.onStop();
         if (player != null) {
-            player.getMediaRouteManager().endScan();
+            MediaRouteManager.getUiComponent().endScan();
         }
     }
 

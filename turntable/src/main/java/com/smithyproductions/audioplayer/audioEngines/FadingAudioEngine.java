@@ -2,6 +2,8 @@ package com.smithyproductions.audioplayer.audioEngines;
 
 import android.util.Log;
 
+import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
+
 /**
  * Created by rory on 09/01/16.
  */
@@ -11,6 +13,10 @@ public class FadingAudioEngine extends PreloadingAudioEngine {
     private static final int FADE_DURATION = 5000;
     private boolean currentlyFading;
     private float globalVolume = 1.0f;
+
+    public FadingAudioEngine(Class<? extends BasePlayerEngine> mediaPlayerClass) {
+        super(mediaPlayerClass);
+    }
 
     @Override
     public void onProgress(float progress) {

@@ -3,13 +3,12 @@ package com.smithyproductions.audioplayer;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.Nullable;
-import android.support.v7.media.MediaRouteSelector;
-import android.support.v7.media.MediaRouter;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.MediaRouter.MediaRouteManager;
 import com.smithyproductions.audioplayer.audioEngines.BaseAudioEngine;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
+import com.smithyproductions.audioplayer.interfaces.AudioEngineInterface;
 import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 import com.smithyproductions.audioplayer.interfaces.State;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
@@ -23,12 +22,9 @@ import java.util.Set;
  */
 public class Turntable {
 
-    private final Class<? extends BaseAudioEngine> audioEngineClass;
-    private final Class<? extends BasePlayerEngine> mediaPlayerClass;
     private static Turntable sTurntable;
-    private final MediaRouteManager mMediaRouteManager;
 
-    private BaseAudioEngine baseAudioEngine;
+    private AudioEngineInterface baseAudioEngine;
 
     private Set<ControlInterface> controlInterfaceSet = new HashSet<>();
 
@@ -38,35 +34,22 @@ public class Turntable {
     private State currentState;
     private PersistentService service;
     private float lastProgress;
-    private boolean chromecastEnabled;
 
 
-    private Turntable(final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
-        this.audioEngineClass = audioEngineClass;
-        this.mediaPlayerClass = mediaPlayerClass;
+    private Turntable(final Context context, final AudioEngineInterface audioEngine) {
+        this.baseAudioEngine = audioEngine;
 
-        try {
-            baseAudioEngine = audioEngineClass.newInstance();
-            //todo think about passing a different callback inetrface here, maybe specially for UI?
-            baseAudioEngine.init(mediaPlayerClass, context, audioEngineCallbacks);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
-        mMediaRouteManager = new MediaRouteManager(context);
-        attachControl(mMediaRouteManager);
+        baseAudioEngine.init(context, audioEngineCallbacks);
 
     }
 
 
-    static Turntable initPlayer (final Context context, final Class<? extends BaseAudioEngine> audioEngineClass, final Class<? extends BasePlayerEngine> mediaPlayerClass) {
+    static Turntable initPlayer (final Context context, final AudioEngineInterface audioEngine) {
         if (sTurntable != null) {
             throw new RuntimeException("You can only init audio player once");
         }
 
-        sTurntable = new Turntable(context, audioEngineClass, mediaPlayerClass);
+        sTurntable = new Turntable(context, audioEngine);
 
         final Intent service = new Intent(context, PersistentService.class);
         service.setAction(PersistentService.ACTION_INIT_PLAYER);
@@ -247,12 +230,4 @@ public class Turntable {
         this.baseAudioEngine.setVolume(volume);
     }
 
-    public void setChromecastEnabled(boolean chromecastEnabled) {
-        this.chromecastEnabled = chromecastEnabled;
-        mMediaRouteManager.setEnabled(this.chromecastEnabled);
-    }
-
-    public MediaRouteManager getMediaRouteManager() {
-        return mMediaRouteManager;
-    }
 }

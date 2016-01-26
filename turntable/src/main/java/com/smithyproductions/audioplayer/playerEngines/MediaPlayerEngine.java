@@ -13,16 +13,18 @@ import com.smithyproductions.audioplayer.interfaces.MediaPlayerCallbacks;
 
 import java.io.IOException;
 
+
 /**
  * Created by rory on 07/01/16.
  */
-public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, PlayerKicker.KickerInterface {
+public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, PlayerKicker.KickerInterface, MediaPlayer.OnSeekCompleteListener {
 
     private final WifiManager.WifiLock mWifiLock;
     private final PlayerKicker audioKicker;
     private AudioTrack track;
     private int trackDuration = -1;
     private float currentProgress = 0;
+    private int mRequestedSeekPosition;
 
     enum State {IDLE, PREPARED, PREPARING, PLAYING, PAUSED, FINISHED;}
 
@@ -39,11 +41,8 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
         this.animatorRunnable = new AnimatorRunnable(new AnimatorRunnable.TickerInterface() {
             @Override
             public void onTick() {
-                if ((currentState == State.PLAYING || currentState == State.PAUSED) && trackDuration >= 0) {
-                    currentProgress = mediaPlayer.getCurrentPosition() / (float) trackDuration;
-                    if (callbacks != null) {
-                        callbacks.onProgress(currentProgress);
-                    }
+                if ((currentState == State.PLAYING || currentState == State.PAUSED)) {
+                    updateProgress();
                 } else if (callbacks != null) {
                     callbacks.onProgress(0);
                 }
@@ -54,16 +53,26 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
                 .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "smithLock");
 
     }
+
+    private void updateProgress() {
+        if (trackDuration >= 0) {
+            currentProgress = mediaPlayer.getCurrentPosition() / (float) trackDuration;
+            if (callbacks != null) {
+                callbacks.onProgress(currentProgress);
+            }
+        }
+    }
+
     private MediaPlayer createMediaPlayer(Context context) {
         MediaPlayer mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
+        mediaPlayer.setOnSeekCompleteListener(this);
         mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
         return mediaPlayer;
     }
-
     @Override
     public void play() {
         setPlayWhenReady(true);
@@ -104,6 +113,8 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
             if(mediaPlayer == null) {
                 mediaPlayer = createMediaPlayer(context);
             }
+
+            mRequestedSeekPosition = 0;
 
             this.track = track;
             mediaPlayer.reset();
@@ -182,6 +193,8 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     public void seekTo(int position) {
         if(currentState == State.PLAYING || currentState == State.PAUSED) {
             mediaPlayer.seekTo(position);
+        } else {
+            mRequestedSeekPosition = position;
         }
     }
 
@@ -216,8 +229,14 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     public void onPrepared(MediaPlayer mp) {
         currentState = State.PREPARED;
         audioKicker.notifyPrepareEnd(track);
-        Log.d("MediaPlayerEngine", "prepared: "+track);
+        Log.d("MediaPlayerEngine", "prepared: " + track);
         trackDuration = mp.getDuration();
+
+        if (mRequestedSeekPosition > 0) {
+            mediaPlayer.seekTo(mRequestedSeekPosition);
+            mRequestedSeekPosition = 0;
+        }
+
         if (playWhenReady) {
             play();
         } else {
@@ -237,6 +256,11 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.d("MediaPlayerEngine", "what: "+what+" extra: "+extra+" error: "+track);
         return false;
+    }
+
+    @Override
+    public void onSeekComplete(MediaPlayer mp) {
+        updateProgress();
     }
 
     @Override

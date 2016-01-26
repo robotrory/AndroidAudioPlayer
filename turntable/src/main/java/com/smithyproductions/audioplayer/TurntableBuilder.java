@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.smithyproductions.audioplayer.audioEngines.BaseAudioEngine;
 import com.smithyproductions.audioplayer.audioEngines.SingleAudioEngine;
+import com.smithyproductions.audioplayer.interfaces.AudioEngineInterface;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
 import com.smithyproductions.audioplayer.playerEngines.MockPlayerEngine;
 
@@ -13,24 +14,22 @@ import com.smithyproductions.audioplayer.playerEngines.MockPlayerEngine;
 public class TurntableBuilder {
 
     private final Context context;
-    private Class<? extends BaseAudioEngine> audioEngineClass = SingleAudioEngine.class;
-    private Class<? extends BasePlayerEngine> mediaPlayerClass = MockPlayerEngine.class;
+    private AudioEngineInterface audioEngine;
 
     public TurntableBuilder(final Context context) {
         this.context = context;
     }
 
     public Turntable build() {
-        return Turntable.initPlayer(context, audioEngineClass, mediaPlayerClass);
+        if (audioEngine == null) {
+            audioEngine = new SingleAudioEngine(MockPlayerEngine.class);
+        }
+
+        return Turntable.initPlayer(context, audioEngine);
     }
 
-    public TurntableBuilder setPlayerEngine(Class<? extends BasePlayerEngine> playerEngine) {
-        this.mediaPlayerClass = playerEngine;
-        return this;
-    }
-
-    public TurntableBuilder setAudioEngine(Class<? extends BaseAudioEngine> audioEngine) {
-        this.audioEngineClass = audioEngine;
+    public TurntableBuilder setAudioEngine(AudioEngineInterface audioEngine) {
+        this.audioEngine = audioEngine;
         return this;
     }
 }
