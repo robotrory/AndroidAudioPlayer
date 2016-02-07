@@ -1,4 +1,4 @@
-package com.smithyproductions.audioplayertest.e8tracks;
+package audioplayertest.e8tracks;
 
 import android.content.Context;
 
@@ -9,8 +9,17 @@ import com.smithyproductions.audioplayer.controls.MediaSessionControl;
  */
 public class e8tracksMediaSessionControl extends MediaSessionControl {
 
-    public e8tracksMediaSessionControl(Context context) {
+    private static e8tracksMediaSessionControl sInstance;
+
+    private e8tracksMediaSessionControl(Context context) {
         super(context);
+    }
+
+    public static e8tracksMediaSessionControl getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new e8tracksMediaSessionControl(context);
+        }
+        return sInstance;
     }
 
     @Override

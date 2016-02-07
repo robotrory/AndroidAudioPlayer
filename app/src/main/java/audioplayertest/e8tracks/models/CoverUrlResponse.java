@@ -1,4 +1,4 @@
-package com.smithyproductions.audioplayertest.e8tracks.models;
+package audioplayertest.e8tracks.models;
 
 /**
  * Created by rory on 23/01/16.

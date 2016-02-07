@@ -16,6 +16,7 @@ import android.util.Log;
 import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.R;
+import com.smithyproductions.audioplayer.interfaces.ControlType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +33,15 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
     protected static final String ACTION_PLAY = "play";
     protected static final String ACTION_DELETE = "delete";
     protected static final int REQUEST_CODE = 3110;
-    private final PendingIntent openIntent;
+    private static NotificationControl sInstance;
+    private PendingIntent openIntent;
     private final BitmapLoaderControl bitmapLoader;
     private NotificationManager mNotificationManager;
     private boolean mStarted;
     private boolean mDismissable;
     private List<String> filterActions = new ArrayList<>();
 
-    public NotificationControl(Context context, PendingIntent openIntent) {
+    protected NotificationControl(Context context) {//, PendingIntent openIntent) {
         this.openIntent = openIntent;
         mNotificationManager = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
@@ -55,12 +57,24 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
 
     }
 
+    public static NotificationControl getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new NotificationControl(context);
+        }
+        return sInstance;
+    }
+
     @Override
     public void setTurntable(Turntable turntable) {
         super.setTurntable(turntable);
         if (turntable != null) {
             turntable.attachControl(bitmapLoader);
         }
+    }
+
+    @Override
+    public ControlType getControlType() {
+        return ControlType.NOTIFICATION;
     }
 
     protected void registerFilter(final String filter) {
@@ -254,5 +268,10 @@ public class NotificationControl extends ControlAdapter implements BitmapLoaderC
             default:
                 Log.w("NotificationControl", "Unknown intent ignored. Action=" + action);
         }
+    }
+
+    public void setPendingIntent(PendingIntent pendingIntent) {
+        this.openIntent = pendingIntent;
+        updateNotification();
     }
 }

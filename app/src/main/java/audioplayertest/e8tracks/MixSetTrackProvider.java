@@ -1,4 +1,4 @@
-package com.smithyproductions.audioplayertest.e8tracks;
+package audioplayertest.e8tracks;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -6,10 +6,11 @@ import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
 import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
-import com.smithyproductions.audioplayertest.e8tracks.models.MixResponse;
-import com.smithyproductions.audioplayertest.e8tracks.models.MixSetResponse;
-import com.smithyproductions.audioplayertest.e8tracks.models.NextMixResponse;
-import com.smithyproductions.audioplayertest.e8tracks.models.TrackResponse;
+import audioplayertest.e8tracks.models.MixInfoResponse;
+import audioplayertest.e8tracks.models.MixResponse;
+import audioplayertest.e8tracks.models.MixSetResponse;
+import audioplayertest.e8tracks.models.NextMixResponse;
+import audioplayertest.e8tracks.models.TrackResponse;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
 
@@ -69,6 +70,18 @@ public class MixSetTrackProvider extends TrackProvider {
                 .build();
 
         apiService = retrofit.create(E8tracksService.class);
+
+        apiService.mixInfo("rory", "mixname").enqueue(new Callback<MixInfoResponse>() {
+            @Override
+            public void onResponse(Response<MixInfoResponse> response, Retrofit retrofit) {
+
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+
+            }
+        });
     }
     public void loadMix(final MixResponse mixResponse) {
 
@@ -396,27 +409,19 @@ public class MixSetTrackProvider extends TrackProvider {
 
     @Override
     public int getTrackCount() {
-        int totalTracks = 0;
-        for(List list : trackListMap.values()) {
-            totalTracks += list.size();
-        }
-        return totalTracks;
-    }
-
-    public List<AudioTrack> getCurrentMixTracks () {
         if (currentMix != null) {
-            Log.d("MixSetTrackProvider", "list size: "+trackListMap.get(currentMix.id).size()+" currentIndex: "+(currentTrackIndex+1));
-            return trackListMap.get(currentMix.id).subList(0, currentTrackIndex+1);
-        } else {
-            return null;
-        }
-    }
-
-    public int getCurrentMixTrackCount() {
-        if(getCurrentMixTracks() != null) {
-            return getCurrentMixTracks().size();
+            return trackListMap.get(currentMix.id).size();
         } else {
             return 0;
+        }
+    }
+
+    @Override
+    public List<AudioTrack> getTrackList() {
+        if (currentMix != null) {
+            return trackListMap.get(currentMix.id);
+        } else {
+            return new ArrayList<>();
         }
     }
 

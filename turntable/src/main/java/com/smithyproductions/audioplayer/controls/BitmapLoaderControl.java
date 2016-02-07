@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.AudioTrack;
+import com.smithyproductions.audioplayer.interfaces.ControlType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,6 +102,11 @@ public class BitmapLoaderControl extends ControlAdapter {
             Log.d("BitmapLoaderControl", "This track has no artwork");
         }
         currentTrack = track;
+    }
+
+    @Override
+    public ControlType getControlType() {
+        return ControlType.MISCELLANEOUS;
     }
 
     public static Bitmap getBitmapFromURL(String src) {

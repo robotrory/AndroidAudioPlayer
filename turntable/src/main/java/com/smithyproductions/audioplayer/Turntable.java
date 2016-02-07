@@ -10,11 +10,17 @@ import com.smithyproductions.audioplayer.audioEngines.BaseAudioEngine;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineCallbacks;
 import com.smithyproductions.audioplayer.interfaces.AudioEngineInterface;
 import com.smithyproductions.audioplayer.interfaces.ControlInterface;
+import com.smithyproductions.audioplayer.interfaces.ControlType;
 import com.smithyproductions.audioplayer.interfaces.State;
 import com.smithyproductions.audioplayer.playerEngines.BasePlayerEngine;
 import com.smithyproductions.audioplayer.trackProviders.TrackProvider;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,6 +40,11 @@ public class Turntable {
     private State currentState;
     private PersistentService service;
     private float lastProgress;
+
+    List<ControlType> uniqueControlTypes = new ArrayList<ControlType>() {{
+        add(ControlType.MEDIASESSION);
+        add(ControlType.NOTIFICATION);
+    }};
 
 
     private Turntable(final Context context, final AudioEngineInterface audioEngine) {
@@ -105,7 +116,22 @@ public class Turntable {
     }
 
     private void addControlToSet(ControlInterface controlInterface) {
+
+
         if(!controlInterfaceSet.contains(controlInterface)) {
+
+            //if we have an interface of that type already then remove the existing one
+            //this is to safeguard against multiple mediasession controllers, for instance
+            if (uniqueControlTypes.contains(controlInterface.getControlType())) {
+                Iterator<ControlInterface> iterator = controlInterfaceSet.iterator();
+                while(iterator.hasNext()) {
+                    ControlInterface existingInterface = iterator.next();
+                    if (existingInterface.getControlType() == controlInterface.getControlType()) {
+                        iterator.remove();
+                    }
+                }
+            }
+
             controlInterface.onProgressChange(lastProgress);
             controlInterface.onDataChange(hasData());
             controlInterface.onAutoPlayChange(isAutoPlay());

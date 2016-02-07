@@ -4,14 +4,18 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.util.Log;
 
+import com.smithyproductions.audioplayer.interfaces.ControlType;
+
 /**
  * Created by rory on 22/01/16.
  */
 public class AudioFocusControl extends ControlAdapter {
 
+    private static AudioFocusControl sInstance;
     private final AudioManager am;
 
-    public AudioFocusControl(final Context context) {
+    private AudioFocusControl(final Context context) {
+        super();
         am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         // Request audio focus for playback
@@ -25,6 +29,13 @@ public class AudioFocusControl extends ControlAdapter {
 //            am.registerMediaButtonEventReceiver(RemoteControlReceiver);
             // Start playback.
         }
+    }
+
+    public static AudioFocusControl getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new AudioFocusControl(context);
+        }
+        return sInstance;
     }
 
     @Override
@@ -46,6 +57,11 @@ public class AudioFocusControl extends ControlAdapter {
         } else {
             am.abandonAudioFocus(afChangeListener);
         }
+    }
+
+    @Override
+    public ControlType getControlType() {
+        return ControlType.AUDIOMANAGER;
     }
 
     private boolean pausedByAudioFocus;

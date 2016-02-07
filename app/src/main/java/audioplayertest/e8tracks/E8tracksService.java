@@ -1,8 +1,8 @@
-package com.smithyproductions.audioplayertest.e8tracks;
+package audioplayertest.e8tracks;
 
-import com.smithyproductions.audioplayertest.e8tracks.models.MixInfoResponse;
-import com.smithyproductions.audioplayertest.e8tracks.models.MixSetResponse;
-import com.smithyproductions.audioplayertest.e8tracks.models.NextMixResponse;
+import audioplayertest.e8tracks.models.MixInfoResponse;
+import audioplayertest.e8tracks.models.MixSetResponse;
+import audioplayertest.e8tracks.models.NextMixResponse;
 
 import retrofit.Call;
 import retrofit.http.GET;

@@ -1,5 +1,12 @@
 <resources>
     <string name="app_name">AudioPlayerTest</string>
+    <string name="local_activity_name">Local Playback</string>
+    <string name="e8tracks_activity_name">8tracks Playback</string>
     <string name="action_settings">Settings</string>
     <string name="media_route_menu_title">Cast</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_play">Play</string>
+    <string name="status_loading">loading</string>
+    <string name="status_no_data">no data</string>
+    <string name="action_load_mix">Load Mix</string>
 </resources>

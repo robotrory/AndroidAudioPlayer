@@ -1,6 +1,7 @@
 package com.smithyproductions.audioplayer.playerEngines;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
@@ -118,7 +119,21 @@ public class MediaPlayerEngine extends BasePlayerEngine implements MediaPlayer.O
 
             this.track = track;
             mediaPlayer.reset();
-            mediaPlayer.setDataSource(track.getUrl());
+
+            if(track.getLocalResId() > 0) {
+                AssetFileDescriptor afd = context.getResources().openRawResourceFd(track.getLocalResId());
+                if (afd == null) {
+                    if(callbacks != null) {
+                        callbacks.onTrackUnplayable();
+                    }
+                    return;
+                } else {
+                    mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                    afd.close();
+                }
+            } else {
+                mediaPlayer.setDataSource(track.getUrl());
+            }
 
             audioKicker.notifyPrepareStart(track, this);
 

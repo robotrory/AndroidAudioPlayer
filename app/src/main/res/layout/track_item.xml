@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#EDEDED"
+    android:padding="8dp">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_weight="5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
     <TextView
         android:id="@+id/track_name"
         android:text="Name"
@@ -13,10 +20,13 @@
         android:text="artist"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-    <LinearLayout
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#333"></LinearLayout>
+        </LinearLayout>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:padding="8dp"
+        android:id="@+id/speaker_icon"
+        android:scaleType="centerInside"
+        android:layout_weight="1"
+        android:src="@drawable/speaker"/>
 </LinearLayout>

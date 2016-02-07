@@ -1,4 +1,4 @@
-package com.smithyproductions.audioplayertest.e8tracks;
+package audioplayertest.e8tracks;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -6,6 +6,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.smithyproductions.audioplayer.controls.NotificationControl;
+import com.smithyproductions.audioplayer.interfaces.ControlType;
 
 import java.util.ArrayList;
 
@@ -15,12 +16,20 @@ import java.util.ArrayList;
 public class e8tracksNotificationControl extends NotificationControl {
 
     private static final String ACTION_NEXT_MIX = "next_mix";
+    private static e8tracksNotificationControl sInstance;
 
-    public e8tracksNotificationControl(Context context, PendingIntent openIntent) {
-        super(context, openIntent);
+    protected e8tracksNotificationControl(Context context) {
+        super(context);
 
         registerFilter(ACTION_NEXT_MIX);
 
+    }
+
+    public static NotificationControl getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new e8tracksNotificationControl(context);
+        }
+        return sInstance;
     }
 
     @Override
@@ -58,5 +67,10 @@ public class e8tracksNotificationControl extends NotificationControl {
                 super.parseBroadcast(action);
         }
 
+    }
+
+    @Override
+    public ControlType getControlType() {
+        return ControlType.NOTIFICATION;
     }
 }

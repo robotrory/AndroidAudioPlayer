@@ -9,13 +9,14 @@ import com.smithyproductions.audioplayer.interfaces.ControlInterface;
 /**
  * Created by rory on 10/01/16.
  */
-public class ControlAdapter implements ControlInterface {
+public abstract class ControlAdapter implements ControlInterface {
 
     @Nullable protected Turntable turntable;
     protected boolean audioPlayerAttached;
 
-    public ControlAdapter () {
+    protected ControlAdapter() {
     }
+
 
     @Override
     public void setTurntable(Turntable turntable) {

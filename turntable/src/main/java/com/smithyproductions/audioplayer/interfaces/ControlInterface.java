@@ -14,4 +14,5 @@ public interface ControlInterface {
     void onProgressChange(final float progress);
     void onDataChange(final boolean hasData);
     void setTurntable(final Turntable turntable);
+    ControlType getControlType();
 }

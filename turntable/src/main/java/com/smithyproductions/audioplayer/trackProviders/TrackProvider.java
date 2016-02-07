@@ -34,6 +34,8 @@ public abstract class TrackProvider {
 
     public abstract int getTrackCount();
 
+    public abstract List<AudioTrack> getTrackList();
+
     public abstract void reset();
 
     public interface TrackCallback {

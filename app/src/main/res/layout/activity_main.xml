@@ -90,8 +90,8 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Load MIx"
-            android:id="@+id/load_mix_button"
+            android:text="Extra Function"
+            android:id="@+id/extra_function_button"
             android:layout_below="@+id/previous_button"
             android:layout_toRightOf="@+id/play_pause_button"
             android:layout_toEndOf="@+id/play_pause_button" />
@@ -108,7 +108,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="All The Tracks"
+            android:text="Track List"
             android:id="@+id/track_title"
             android:textSize="25sp"
             android:layout_below="@+id/progress_bar"
@@ -120,6 +120,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentBottom="true"
+            tools:listitem="@layout/track_item"
             android:layout_below="@+id/track_title" />
 
         <ImageView

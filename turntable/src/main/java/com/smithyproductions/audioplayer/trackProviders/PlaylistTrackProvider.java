@@ -66,6 +66,11 @@ public class PlaylistTrackProvider extends TrackProvider {
     }
 
     @Override
+    public List<AudioTrack> getTrackList() {
+        return trackList;
+    }
+
+    @Override
     public void reset() {
         currentTrackIndex = 0;
 

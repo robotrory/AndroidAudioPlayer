@@ -19,21 +19,31 @@ import android.view.KeyEvent;
 
 import com.smithyproductions.audioplayer.Turntable;
 import com.smithyproductions.audioplayer.AudioTrack;
+import com.smithyproductions.audioplayer.interfaces.ControlType;
 
 /**
  * Created by rory on 10/01/16.
  */
 public class MediaSessionControl extends ControlAdapter implements BitmapLoaderControl.BitmapLoaderInterface {
     public static final long CAPABILITIES = PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
+    private static MediaSessionControl sInstance;
     private final Context context;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls mTransportController;
     private BitmapLoaderControl bitmapLoader;
 
-    public MediaSessionControl (final Context context) {
+    protected MediaSessionControl(final Context context) {
+        super();
         this.context = context;
         bitmapLoader = BitmapLoaderControl.getInstance();
         bitmapLoader.attachBitmapLoaderInterface(this);
+    }
+
+    public static MediaSessionControl getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new MediaSessionControl(context);
+        }
+        return sInstance;
     }
 
     @Override
@@ -42,6 +52,11 @@ public class MediaSessionControl extends ControlAdapter implements BitmapLoaderC
         if (turntable != null) {
             turntable.attachControl(bitmapLoader);
         }
+    }
+
+    @Override
+    public ControlType getControlType() {
+        return ControlType.MEDIASESSION;
     }
 
     private void setupMediaSession() {
